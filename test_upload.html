@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Upload Gallery</title>
+</head>
+<body>
+    <h1>Test Upload Foto Gallery</h1>
+    
+    <form id="uploadForm">
+        <p>
+            <label>Token (dari localStorage):</label><br>
+            <input type="text" id="token" size="80" placeholder="Paste token JWT dari browser">
+        </p>
+        <p>
+            <label>UMKM ID:</label><br>
+            <input type="text" id="umkmId" placeholder="UUID UMKM">
+        </p>
+        <p>
+            <label>Pilih Foto:</label><br>
+            <input type="file" id="imageFile" accept="image/*">
+        </p>
+        <p>
+            <label>
+                <input type="checkbox" id="isPrimary">
+                Set sebagai foto utama
+            </label>
+        </p>
+        <button type="submit">Upload</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const token = document.getElementById('token').value;
+            const umkmId = document.getElementById('umkmId').value;
+            const imageFile = document.getElementById('imageFile').files[0];
+            const isPrimary = document.getElementById('isPrimary').checked;
+            
+            if (!token || !umkmId || !imageFile) {
+                alert('Semua field harus diisi!');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            formData.append('umkm', umkmId);
+            formData.append('is_primary', isPrimary);
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Uploading...</p>';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/umkm-gallery/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <h3 style="color: green;">✅ Upload Berhasil!</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h3 style="color: red;">❌ Upload Gagal</h3>
+                        <p>Status: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3 style="color: red;">❌ Network Error</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        });
+        
+        // Auto-fill token dari prompt
+        window.addEventListener('load', () => {
+            const savedToken = prompt('Paste JWT token dari browser localStorage:');
+            if (savedToken) {
+                document.getElementById('token').value = savedToken;
+            }
+        });
+    </script>
+</body>
+</html>
