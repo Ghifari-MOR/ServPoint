@@ -19,7 +19,7 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<Navigate to="/user-map" replace />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/auth/google/callback" element={<GoogleCallback />} />
@@ -71,18 +71,25 @@ function App() {
           }
         />
 
-        {/* Admin - Require staff access */}
+        {/* Admin - Require ADMIN role or staff access */}
         <Route
           path="/admin"
           element={
-            <PrivateRoute requireStaff={true}>
+            <PrivateRoute allowedRoles={["ADMIN"]} requireStaff={false}>
               <Admin />
             </PrivateRoute>
           }
         />
         
-        {/* User Map - Public access */}
-        <Route path="/user-map" element={<UserMap />} />
+        {/* User Map - Only for USER role */}
+        <Route 
+          path="/user-map" 
+          element={
+            <PrivateRoute allowedRoles={["USER"]}>
+              <UserMap />
+            </PrivateRoute>
+          } 
+        />
         <Route path="/user/map" element={<Navigate to="/user-map" replace />} />
 
         {/* UMKM Detail */}
@@ -95,11 +102,11 @@ function App() {
           }
         />
 
-        {/* User Settings */}
+        {/* User Settings - Only for USER role */}
         <Route
           path="/settings"
           element={
-            <PrivateRoute>
+            <PrivateRoute allowedRoles={["USER"]}>
               <UserSettings />
             </PrivateRoute>
           }
@@ -115,7 +122,7 @@ function App() {
           }
         />
         
-        <Route path="*" element={<Navigate to="/user-map" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </AuthProvider>
   )

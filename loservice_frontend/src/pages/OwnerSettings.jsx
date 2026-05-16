@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
-import { User, Lock, Bell, Info, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { User, Lock, Bell, Info, Eye, EyeOff, AlertCircle, Save, CheckCircle } from 'lucide-react'
 import api from '../services/api'
 
 export default function OwnerSettings() {
@@ -102,535 +102,475 @@ export default function OwnerSettings() {
     }
   }
 
+  const tabs = [
+    { id: 'profile', icon: User, label: 'Profil' },
+    { id: 'security', icon: Lock, label: 'Keamanan' },
+    { id: 'notifications', icon: Bell, label: 'Notifikasi' },
+    { id: 'about', icon: Info, label: 'Tentang' }
+  ]
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#f8fafc',
-      display: 'flex'
-    }}>
-      {/* Sidebar */}
-      <aside style={{
-        width: 280,
-        background: '#fff',
-        borderRight: '1px solid #e2e8f0',
-        padding: '32px 0'
-      }}>
-        <div style={{ padding: '0 24px', marginBottom: 32 }}>
-          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: '#0f172a' }}>
-            Pengaturan
-          </h2>
-          <p style={{ margin: '4px 0 0', fontSize: 14, color: '#64748b' }}>
-            Kelola akun owner Anda
-          </p>
-        </div>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc' }}>
+      <main style={{ flex: 1, padding: '32px 48px' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          {/* Header */}
+          <div style={{ marginBottom: 32 }}>
+            <button
+              onClick={() => navigate('/owner')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#64748b',
+                fontSize: 14,
+                cursor: 'pointer',
+                marginBottom: 16,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+              }}
+            >
+              ← Kembali
+            </button>
+            <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: '#0f172a' }}>
+              Pengaturan Akun
+            </h1>
+            <p style={{ margin: '8px 0 0 0', fontSize: 16, color: '#64748b' }}>
+              Kelola informasi akun dan preferensi Anda
+            </p>
+          </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column' }}>
-          <TabButton
-            icon={<User size={18} />}
-            label="Profil"
-            active={activeTab === 'profile'}
-            onClick={() => setActiveTab('profile')}
-          />
-          <TabButton
-            icon={<Lock size={18} />}
-            label="Keamanan"
-            active={activeTab === 'security'}
-            onClick={() => setActiveTab('security')}
-          />
-          <TabButton
-            icon={<Bell size={18} />}
-            label="Notifikasi"
-            active={activeTab === 'notifications'}
-            onClick={() => setActiveTab('notifications')}
-          />
-          <TabButton
-            icon={<Info size={18} />}
-            label="Tentang"
-            active={activeTab === 'about'}
-            onClick={() => setActiveTab('about')}
-          />
-        </nav>
+          <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 24 }}>
+            {/* Sidebar Tabs */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {tabs.map((tab) => {
+                const Icon = tab.icon
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '12px 16px',
+                      background: activeTab === tab.id ? '#fff' : 'transparent',
+                      border: activeTab === tab.id ? '1px solid #e2e8f0' : '1px solid transparent',
+                      borderRadius: 12,
+                      fontSize: 14,
+                      fontWeight: activeTab === tab.id ? 600 : 500,
+                      color: activeTab === tab.id ? '#3b82f6' : '#64748b',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <Icon size={18} />
+                    {tab.label}
+                  </button>
+                )
+              })}
+            </div>
 
-        <div style={{ padding: '0 24px', marginTop: 'auto', paddingTop: 32 }}>
-          <button
-            onClick={() => navigate('/owner')}
-            style={{
-              width: '100%',
-              padding: '10px 16px',
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: 8,
-              fontSize: 14,
-              fontWeight: 500,
-              color: '#64748b',
-              cursor: 'pointer'
-            }}
-          >
-            ← Kembali ke Dashboard
-          </button>
-        </div>
-      </aside>
+            {/* Content Area */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 32 }}>
+              {/* Profile Tab */}
+              {activeTab === 'profile' && (
+                <div>
+                  <h2 style={{ margin: '0 0 24px 0', fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
+                    Informasi Profil
+                  </h2>
 
-      {/* Main Content */}
-      <main style={{ flex: 1, padding: 48 }}>
-        <div style={{ maxWidth: 800, margin: '0 auto' }}>
-          {activeTab === 'profile' && (
-            <div>
-              <h1 style={{ margin: '0 0 8px 0', fontSize: 28, fontWeight: 700, color: '#0f172a' }}>
-                Informasi Profil
-              </h1>
-              <p style={{ margin: '0 0 32px 0', fontSize: 14, color: '#64748b' }}>
-                Perbarui informasi profil dan email Anda
-              </p>
+                  {profileSuccess && (
+                    <div style={{
+                      padding: 16,
+                      background: '#d1fae5',
+                      border: '1px solid #a7f3d0',
+                      borderRadius: 12,
+                      marginBottom: 24,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      color: '#065f46'
+                    }}>
+                      <CheckCircle size={20} />
+                      {profileSuccess}
+                    </div>
+                  )}
 
-              <form onSubmit={handleUpdateProfile} style={{
-                background: '#fff',
-                borderRadius: 12,
-                border: '1px solid #e2e8f0',
-                padding: 32
-              }}>
-                {profileSuccess && (
+                  {profileError && (
+                    <div style={{
+                      padding: 16,
+                      background: '#fee2e2',
+                      border: '1px solid #fecaca',
+                      borderRadius: 12,
+                      marginBottom: 24,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      color: '#991b1b'
+                    }}>
+                      <AlertCircle size={20} />
+                      {profileError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleUpdateProfile}>
+                    <div style={{ marginBottom: 20 }}>
+                      <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                        Nama Lengkap
+                      </label>
+                      <input
+                        type="text"
+                        value={profileForm.name}
+                        onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: 8,
+                          fontSize: 14
+                        }}
+                        placeholder="Masukkan nama lengkap"
+                      />
+                    </div>
+
+                    <div style={{ marginBottom: 20 }}>
+                      <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={profileForm.email}
+                        onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: 8,
+                          fontSize: 14
+                        }}
+                        placeholder="email@example.com"
+                      />
+                    </div>
+
+                    <div style={{ marginBottom: 20 }}>
+                      <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                        Username
+                      </label>
+                      <input
+                        type="text"
+                        value={profileForm.username}
+                        onChange={(e) => setProfileForm({ ...profileForm, username: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: 8,
+                          fontSize: 14
+                        }}
+                        placeholder="username"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '12px 24px',
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+                        border: 'none',
+                        borderRadius: 8,
+                        color: '#fff',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <Save size={18} />
+                      Simpan Perubahan
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {/* Security Tab */}
+              {activeTab === 'security' && (
+                <div>
+                  <h2 style={{ margin: '0 0 8px 0', fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
+                    Ubah Password
+                  </h2>
+                  <p style={{ margin: '0 0 24px 0', fontSize: 14, color: '#64748b' }}>
+                    Pastikan password Anda kuat dan aman
+                  </p>
+
+                  {passwordSuccess && (
+                    <div style={{
+                      padding: 16,
+                      background: '#d1fae5',
+                      border: '1px solid #a7f3d0',
+                      borderRadius: 12,
+                      marginBottom: 24,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      color: '#065f46'
+                    }}>
+                      <CheckCircle size={20} />
+                      {passwordSuccess}
+                    </div>
+                  )}
+
+                  {passwordError && (
+                    <div style={{
+                      padding: 16,
+                      background: '#fee2e2',
+                      border: '1px solid #fecaca',
+                      borderRadius: 12,
+                      marginBottom: 24,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      color: '#991b1b'
+                    }}>
+                      <AlertCircle size={20} />
+                      {passwordError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleChangePassword}>
+                    <div style={{ marginBottom: 20 }}>
+                      <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                        Password Saat Ini
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type={showPasswords.current ? 'text' : 'password'}
+                          value={passwordForm.currentPassword}
+                          onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                          required
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            paddingRight: 48,
+                            border: '1px solid #cbd5e1',
+                            borderRadius: 8,
+                            fontSize: 14
+                          }}
+                          placeholder="Masukkan password saat ini"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
+                          style={{
+                            position: 'absolute',
+                            right: 12,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#64748b'
+                          }}
+                        >
+                          {showPasswords.current ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: 20 }}>
+                      <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                        Password Baru
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type={showPasswords.new ? 'text' : 'password'}
+                          value={passwordForm.newPassword}
+                          onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                          required
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            paddingRight: 48,
+                            border: '1px solid #cbd5e1',
+                            borderRadius: 8,
+                            fontSize: 14
+                          }}
+                          placeholder="Minimal 8 karakter"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
+                          style={{
+                            position: 'absolute',
+                            right: 12,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#64748b'
+                          }}
+                        >
+                          {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: 24 }}>
+                      <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                        Konfirmasi Password Baru
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type={showPasswords.confirm ? 'text' : 'password'}
+                          value={passwordForm.confirmPassword}
+                          onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                          required
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            paddingRight: 48,
+                            border: '1px solid #cbd5e1',
+                            borderRadius: 8,
+                            fontSize: 14
+                          }}
+                          placeholder="Ketik ulang password baru"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
+                          style={{
+                            position: 'absolute',
+                            right: 12,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#64748b'
+                          }}
+                        >
+                          {showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '12px 24px',
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+                        border: 'none',
+                        borderRadius: 8,
+                        color: '#fff',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <Lock size={18} />
+                      Ubah Password
+                    </button>
+                  </form>
+
+                  {/* Delete Account */}
                   <div style={{
-                    padding: 12,
-                    background: '#f0fdf4',
-                    border: '1px solid #86efac',
-                    borderRadius: 8,
-                    color: '#16a34a',
-                    fontSize: 14,
-                    marginBottom: 20
-                  }}>
-                    {profileSuccess}
-                  </div>
-                )}
-
-                {profileError && (
-                  <div style={{
-                    padding: 12,
+                    marginTop: 48,
+                    padding: 24,
                     background: '#fef2f2',
-                    border: '1px solid #fca5a5',
-                    borderRadius: 8,
-                    color: '#dc2626',
-                    fontSize: 14,
-                    marginBottom: 20
+                    border: '1px solid #fecaca',
+                    borderRadius: 12
                   }}>
-                    {profileError}
-                  </div>
-                )}
-
-                <div style={{ marginBottom: 24 }}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: '#0f172a',
-                    marginBottom: 8
-                  }}>
-                    Nama Lengkap
-                  </label>
-                  <input
-                    type="text"
-                    value={profileForm.name}
-                    onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: 8,
-                      fontSize: 14
-                    }}
-                  />
-                </div>
-
-                <div style={{ marginBottom: 24 }}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: '#0f172a',
-                    marginBottom: 8
-                  }}>
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={profileForm.email}
-                    onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: 8,
-                      fontSize: 14
-                    }}
-                  />
-                </div>
-
-                <div style={{ marginBottom: 24 }}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: '#0f172a',
-                    marginBottom: 8
-                  }}>
-                    Username
-                  </label>
-                  <input
-                    type="text"
-                    value={profileForm.username}
-                    onChange={(e) => setProfileForm({ ...profileForm, username: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: 8,
-                      fontSize: 14
-                    }}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  style={{
-                    padding: '10px 24px',
-                    background: '#4f46e5',
-                    border: 'none',
-                    borderRadius: 8,
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: '#fff',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Simpan Perubahan
-                </button>
-              </form>
-            </div>
-          )}
-
-          {activeTab === 'security' && (
-            <div>
-              <h1 style={{ margin: '0 0 8px 0', fontSize: 28, fontWeight: 700, color: '#0f172a' }}>
-                Keamanan Akun
-              </h1>
-              <p style={{ margin: '0 0 32px 0', fontSize: 14, color: '#64748b' }}>
-                Kelola password dan keamanan akun Anda
-              </p>
-
-              <form onSubmit={handleChangePassword} style={{
-                background: '#fff',
-                borderRadius: 12,
-                border: '1px solid #e2e8f0',
-                padding: 32
-              }}>
-                <h3 style={{ margin: '0 0 20px 0', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>
-                  Ganti Password
-                </h3>
-
-                {passwordSuccess && (
-                  <div style={{
-                    padding: 12,
-                    background: '#f0fdf4',
-                    border: '1px solid #86efac',
-                    borderRadius: 8,
-                    color: '#16a34a',
-                    fontSize: 14,
-                    marginBottom: 20
-                  }}>
-                    {passwordSuccess}
-                  </div>
-                )}
-
-                {passwordError && (
-                  <div style={{
-                    padding: 12,
-                    background: '#fef2f2',
-                    border: '1px solid #fca5a5',
-                    borderRadius: 8,
-                    color: '#dc2626',
-                    fontSize: 14,
-                    marginBottom: 20
-                  }}>
-                    {passwordError}
-                  </div>
-                )}
-
-                <div style={{ marginBottom: 24 }}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: '#0f172a',
-                    marginBottom: 8
-                  }}>
-                    Password Lama
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type={showPasswords.current ? 'text' : 'password'}
-                      value={passwordForm.currentPassword}
-                      onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '10px 40px 10px 14px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: 8,
-                        fontSize: 14
-                      }}
-                    />
+                    <h3 style={{ margin: '0 0 8px 0', fontSize: 16, fontWeight: 700, color: '#991b1b' }}>
+                      Zona Berbahaya
+                    </h3>
+                    <p style={{ margin: '0 0 16px 0', fontSize: 14, color: '#7f1d1d' }}>
+                      Hapus akun dan semua data UMKM Anda secara permanen. Tindakan ini tidak dapat dibatalkan!
+                    </p>
                     <button
-                      type="button"
-                      onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
+                      onClick={handleDeleteAccount}
                       style={{
-                        position: 'absolute',
-                        right: 12,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'none',
+                        padding: '10px 20px',
+                        background: '#dc2626',
                         border: 'none',
-                        cursor: 'pointer',
-                        color: '#64748b'
+                        borderRadius: 8,
+                        color: '#fff',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer'
                       }}
                     >
-                      {showPasswords.current ? <EyeOff size={18} /> : <Eye size={18} />}
+                      Hapus Akun
                     </button>
                   </div>
                 </div>
+              )}
 
-                <div style={{ marginBottom: 24 }}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: '#0f172a',
-                    marginBottom: 8
-                  }}>
-                    Password Baru
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type={showPasswords.new ? 'text' : 'password'}
-                      value={passwordForm.newPassword}
-                      onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '10px 40px 10px 14px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: 8,
-                        fontSize: 14
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
-                      style={{
-                        position: 'absolute',
-                        right: 12,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: '#64748b'
-                      }}
-                    >
-                      {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
+              {/* Notifications Tab */}
+              {activeTab === 'notifications' && (
+                <div>
+                  <h2 style={{ margin: '0 0 8px 0', fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
+                    Pengaturan Notifikasi
+                  </h2>
+                  <p style={{ margin: '0 0 24px 0', fontSize: 14, color: '#64748b' }}>
+                    Kelola preferensi notifikasi Anda
+                  </p>
+
+                  <NotificationToggle
+                    label="Notifikasi Email"
+                    description="Terima notifikasi melalui email"
+                    checked={notifications.email}
+                    onChange={(checked) => setNotifications({ ...notifications, email: checked })}
+                  />
+                  <NotificationToggle
+                    label="Notifikasi Push"
+                    description="Terima notifikasi push browser"
+                    checked={notifications.push}
+                    onChange={(checked) => setNotifications({ ...notifications, push: checked })}
+                  />
+                  <NotificationToggle
+                    label="Ulasan Baru"
+                    description="Notifikasi saat ada ulasan baru"
+                    checked={notifications.reviews}
+                    onChange={(checked) => setNotifications({ ...notifications, reviews: checked })}
+                  />
+                  <NotificationToggle
+                    label="Pesanan & Pertanyaan"
+                    description="Notifikasi untuk pertanyaan pelanggan"
+                    checked={notifications.orders}
+                    onChange={(checked) => setNotifications({ ...notifications, orders: checked })}
+                    isLast
+                  />
+                </div>
+              )}
+
+              {/* About Tab */}
+              {activeTab === 'about' && (
+                <div>
+                  <h2 style={{ margin: '0 0 24px 0', fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
+                    Informasi Aplikasi
+                  </h2>
+
+                  <div style={{ marginBottom: 32 }}>
+                    <InfoCard label="Versi Aplikasi" value="1.0.0" />
+                    <InfoCard label="Role Akun" value="Owner" />
+                    <InfoCard label="Terdaftar Sejak" value={new Date().toLocaleDateString('id-ID')} />
+                    <InfoCard label="Kebijakan Privasi" value="Lihat kebijakan →" isLink />
+                    <InfoCard label="Pusat Bantuan" value="Hubungi support →" isLink />
+                    <InfoCard label="Website" value="servpoint.com" isLast isLink />
                   </div>
                 </div>
-
-                <div style={{ marginBottom: 24 }}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: '#0f172a',
-                    marginBottom: 8
-                  }}>
-                    Konfirmasi Password Baru
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type={showPasswords.confirm ? 'text' : 'password'}
-                      value={passwordForm.confirmPassword}
-                      onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '10px 40px 10px 14px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: 8,
-                        fontSize: 14
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
-                      style={{
-                        position: 'absolute',
-                        right: 12,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: '#64748b'
-                      }}
-                    >
-                      {showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  style={{
-                    padding: '10px 24px',
-                    background: '#4f46e5',
-                    border: 'none',
-                    borderRadius: 8,
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: '#fff',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Ubah Password
-                </button>
-              </form>
+              )}
             </div>
-          )}
-
-          {activeTab === 'notifications' && (
-            <div>
-              <h1 style={{ margin: '0 0 8px 0', fontSize: 28, fontWeight: 700, color: '#0f172a' }}>
-                Notifikasi
-              </h1>
-              <p style={{ margin: '0 0 32px 0', fontSize: 14, color: '#64748b' }}>
-                Kelola preferensi notifikasi Anda
-              </p>
-
-              <div style={{
-                background: '#fff',
-                borderRadius: 12,
-                border: '1px solid #e2e8f0',
-                padding: 32
-              }}>
-                <NotificationToggle
-                  label="Notifikasi Email"
-                  description="Terima notifikasi melalui email"
-                  checked={notifications.email}
-                  onChange={(checked) => setNotifications({ ...notifications, email: checked })}
-                />
-                <NotificationToggle
-                  label="Notifikasi Push"
-                  description="Terima notifikasi push browser"
-                  checked={notifications.push}
-                  onChange={(checked) => setNotifications({ ...notifications, push: checked })}
-                />
-                <NotificationToggle
-                  label="Ulasan Baru"
-                  description="Notifikasi saat ada ulasan baru"
-                  checked={notifications.reviews}
-                  onChange={(checked) => setNotifications({ ...notifications, reviews: checked })}
-                />
-                <NotificationToggle
-                  label="Pesanan & Pertanyaan"
-                  description="Notifikasi untuk pertanyaan pelanggan"
-                  checked={notifications.orders}
-                  onChange={(checked) => setNotifications({ ...notifications, orders: checked })}
-                  isLast
-                />
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'about' && (
-            <div>
-              <h1 style={{ margin: '0 0 8px 0', fontSize: 28, fontWeight: 700, color: '#0f172a' }}>
-                Tentang
-              </h1>
-              <p style={{ margin: '0 0 32px 0', fontSize: 14, color: '#64748b' }}>
-                Informasi aplikasi dan akun
-              </p>
-
-              <div style={{
-                background: '#fff',
-                borderRadius: 12,
-                border: '1px solid #e2e8f0',
-                padding: 32,
-                marginBottom: 24
-              }}>
-                <InfoCard label="Versi Aplikasi" value="1.0.0" />
-                <InfoCard label="Role Akun" value="Owner" />
-                <InfoCard label="Terdaftar Sejak" value={new Date().toLocaleDateString('id-ID')} />
-                <InfoCard label="Kebijakan Privasi" value="Lihat kebijakan →" isLink />
-                <InfoCard label="Pusat Bantuan" value="Hubungi support →" isLink />
-                <InfoCard label="Website" value="servpoint.com" isLast isLink />
-              </div>
-
-              <div style={{
-                background: '#fff',
-                borderRadius: 12,
-                border: '1px solid #fee2e2',
-                padding: 32
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                  <AlertCircle size={20} color="#dc2626" />
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#dc2626' }}>
-                    Danger Zone
-                  </h3>
-                </div>
-                <p style={{ margin: '0 0 16px 0', fontSize: 14, color: '#64748b', lineHeight: 1.6 }}>
-                  Menghapus akun akan menghapus semua data UMKM, produk, jasa, dan ulasan Anda secara permanen.
-                  Tindakan ini tidak dapat dibatalkan.
-                </p>
-                <button
-                  onClick={handleDeleteAccount}
-                  style={{
-                    padding: '10px 24px',
-                    background: '#dc2626',
-                    border: 'none',
-                    borderRadius: 8,
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: '#fff',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Hapus Akun
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </main>
     </div>
-  )
-}
-
-function TabButton({ icon, label, active, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        padding: '12px 24px',
-        background: active ? '#f8fafc' : 'transparent',
-        border: 'none',
-        borderLeft: active ? '3px solid #4f46e5' : '3px solid transparent',
-        fontSize: 14,
-        fontWeight: 500,
-        color: active ? '#4f46e5' : '#64748b',
-        cursor: 'pointer',
-        textAlign: 'left',
-        transition: 'all 0.2s'
-      }}
-    >
-      {icon}
-      {label}
-    </button>
   )
 }
 
@@ -671,7 +611,7 @@ function NotificationToggle({ label, description, checked, onChange, isLast }) {
           left: 0,
           right: 0,
           bottom: 0,
-          background: checked ? '#4f46e5' : '#cbd5e1',
+          background: checked ? '#3b82f6' : '#cbd5e1',
           borderRadius: 24,
           transition: 'all 0.2s'
         }}>
@@ -708,7 +648,7 @@ function InfoCard({ label, value, isLink, isLast }) {
         margin: 0,
         fontSize: 14,
         fontWeight: 500,
-        color: isLink ? '#4f46e5' : '#0f172a',
+        color: isLink ? '#3b82f6' : '#0f172a',
         cursor: isLink ? 'pointer' : 'default'
       }}>
         {value}

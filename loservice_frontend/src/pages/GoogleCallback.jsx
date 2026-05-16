@@ -53,7 +53,7 @@ export default function GoogleCallback() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -106,7 +106,7 @@ export default function GoogleCallback() {
               width: 64,
               height: 64,
               border: '4px solid #e0e7ff',
-              borderTop: '4px solid #4f46e5',
+              borderTop: '4px solid #3b82f6',
               borderRadius: '50%',
               margin: '0 auto 20px',
               animation: 'spin 1s linear infinite'

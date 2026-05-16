@@ -1,0 +1,10 @@
+$kind: http-request
+name: GET TOKEN
+url: http://localhost:8000/api/auth/me/
+method: GET
+auth:
+  credentials:
+    - key: token
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc3NDYzODIyLCJpYXQiOjE3Nzc0NTY2MjIsImp0aSI6ImQ1MGU4N2ZlOGRmNTQzN2VhOWU0NTljNTEzN2E1OGQ1IiwidXNlcl9pZCI6ImNkMDY0ZjgyLWQ4YjQtNDhmNy1hNGFkLWE1OTk0ODljOTIxNSJ9.DoT-ArRCCYlprgiEz3i-6AjZNzsPlwNB0zbdX-4doDY
+  type: bearer
+order: 4373097124825057

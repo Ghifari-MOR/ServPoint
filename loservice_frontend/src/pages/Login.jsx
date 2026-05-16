@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 
 export default function Login() {
   const { login } = useContext(AuthContext)
@@ -32,49 +32,53 @@ export default function Login() {
     }
   }
 
+  // Responsive styling
+  const isMobile = window.innerWidth <= 768
+  const isSmallMobile = window.innerWidth <= 480
+
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: '#f3f4f6',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '24px',
+      padding: isMobile ? '16px' : '24px',
       position: 'relative'
     }}>
       {/* Login Card */}
       <div style={{
         background: '#fff',
-        borderRadius: 20,
-        padding: '48px 40px',
+        borderRadius: isMobile ? 12 : 16,
+        padding: isSmallMobile ? '32px 20px' : isMobile ? '40px 28px' : '48px 40px',
         width: '100%',
-        maxWidth: 440,
-        boxShadow: '0 10px 40px rgba(0,0,0,0.08)'
+        maxWidth: 450,
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
       }}>
         {/* Logo & Title */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <div style={{ textAlign: 'center', marginBottom: isMobile ? 28 : 32 }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: 8,
-            marginBottom: 20
+            marginBottom: isMobile ? 16 : 20
           }}>
             <div style={{
-              width: 40,
-              height: 40,
-              background: '#4f46e5',
-              borderRadius: 10,
+              width: isSmallMobile ? 40 : 44,
+              height: isSmallMobile ? 40 : 44,
+              background: '#2563eb',
+              borderRadius: 8,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#fff',
-              fontSize: 20,
+              fontSize: isSmallMobile ? 18 : 20,
               fontWeight: 700
             }}>
               SP
             </div>
             <span style={{
-              fontSize: 22,
+              fontSize: isSmallMobile ? 18 : 20,
               fontWeight: 700,
               color: '#0f172a'
             }}>
@@ -82,19 +86,21 @@ export default function Login() {
             </span>
           </div>
           <h1 style={{
-            fontSize: 28,
+            fontSize: isSmallMobile ? 22 : isMobile ? 24 : 28,
             fontWeight: 700,
             margin: '0 0 8px',
-            color: '#0f172a'
+            color: '#0f172a',
+            lineHeight: 1.3
           }}>
             Selamat Datang Kembali
           </h1>
           <p style={{
-            fontSize: 14,
+            fontSize: isSmallMobile ? 13 : 14,
             color: '#64748b',
-            margin: 0
+            margin: 0,
+            lineHeight: 1.5
           }}>
-            Masuk untuk menemukan layanan servis terpercaya di sekitar kampus.
+            Masuk untuk menemukan layanan terpercaya di sekitar Anda
           </p>
         </div>
 
@@ -105,73 +111,62 @@ export default function Login() {
               background: '#fef2f2',
               border: '1px solid #fecaca',
               color: '#dc2626',
-              padding: '12px 16px',
-              borderRadius: 10,
-              fontSize: 14,
-              marginBottom: 20
+              padding: isMobile ? '10px 14px' : '12px 16px',
+              borderRadius: 6,
+              fontSize: isSmallMobile ? 13 : 14,
+              marginBottom: isMobile ? 16 : 20,
+              lineHeight: 1.5
             }}>
               {error}
             </div>
           )}
 
           {/* Email/Username */}
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: isMobile ? 15 : 20 }}>
             <label style={{
               display: 'block',
-              fontSize: 14,
+              fontSize: isSmallMobile ? 13 : 14,
               fontWeight: 600,
               color: '#1e293b',
               marginBottom: 8
             }}>
               Email atau Username
             </label>
-            <div style={{ position: 'relative' }}>
-              <Mail
-                size={18}
-                style={{
-                  position: 'absolute',
-                  left: 14,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#94a3b8'
-                }}
-              />
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                type="email"
-                required
-                placeholder="nama@email.com"
-                style={{
-                  width: '100%',
-                  padding: '12px 16px 12px 44px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: 10,
-                  fontSize: 15,
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                  boxSizing: 'border-box',
-                  background: '#f8fafc'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#14b8a6'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(20, 184, 166, 0.1)'
-                  e.target.style.background = '#fff'
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#e2e8f0'
-                  e.target.style.boxShadow = 'none'
-                  e.target.style.background = '#f8fafc'
-                }}
-              />
-            </div>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              required
+              placeholder="nama@email.com"
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '1px solid #e2e8f0',
+                borderRadius: 8,
+                fontSize: isSmallMobile ? 14 : 14,
+                outline: 'none',
+                transition: 'all 0.2s',
+                boxSizing: 'border-box',
+                background: '#f8fafc'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#2563eb'
+                e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'
+                e.target.style.background = '#fff'
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0'
+                e.target.style.boxShadow = 'none'
+                e.target.style.background = '#f8fafc'
+              }}
+            />
           </div>
 
           {/* Password */}
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: isMobile ? 14 : 20 }}>
             <label style={{
               display: 'block',
-              fontSize: 14,
+              fontSize: isSmallMobile ? 13 : 14,
               fontWeight: 600,
               color: '#1e293b',
               marginBottom: 8
@@ -179,17 +174,6 @@ export default function Login() {
               Kata Sandi
             </label>
             <div style={{ position: 'relative' }}>
-              <Lock
-                size={18}
-                style={{
-                  position: 'absolute',
-                  left: 14,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#94a3b8',
-                  zIndex: 1
-                }}
-              />
               <input
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -198,18 +182,18 @@ export default function Login() {
                 placeholder="••••••••"
                 style={{
                   width: '100%',
-                  padding: '12px 44px 12px 44px',
+                  padding: '12px 44px 12px 14px',
                   border: '1px solid #e2e8f0',
-                  borderRadius: 10,
-                  fontSize: 15,
+                  borderRadius: 8,
+                  fontSize: isSmallMobile ? 14 : 14,
                   outline: 'none',
                   transition: 'all 0.2s',
                   boxSizing: 'border-box',
                   background: '#f8fafc'
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#4f46e5'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(79, 70, 229, 0.1)'
+                  e.target.style.borderColor = '#2563eb'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'
                   e.target.style.background = '#fff'
                 }}
                 onBlur={(e) => {
@@ -232,7 +216,7 @@ export default function Login() {
                   padding: 4,
                   display: 'flex',
                   alignItems: 'center',
-                  color: '#64748b'
+                  color: '#94a3b8'
                 }}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -245,14 +229,16 @@ export default function Login() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: 24
+            marginBottom: isMobile ? 20 : 24,
+            flexWrap: isSmallMobile ? 'wrap' : 'nowrap',
+            gap: isSmallMobile ? 12 : 0
           }}>
             <label style={{
               display: 'flex',
               alignItems: 'center',
               gap: 8,
               cursor: 'pointer',
-              fontSize: 14,
+              fontSize: isSmallMobile ? 13 : 14,
               color: '#475569'
             }}>
               <input
@@ -263,7 +249,7 @@ export default function Login() {
                   width: 16,
                   height: 16,
                   cursor: 'pointer',
-                  accentColor: '#4f46e5'
+                  accentColor: '#2563eb'
                 }}
               />
               Ingat saya
@@ -271,8 +257,8 @@ export default function Login() {
             <Link
               to="/forgot-password"
               style={{
-                fontSize: 14,
-                color: '#4f46e5',
+                fontSize: isSmallMobile ? 13 : 14,
+                color: '#2563eb',
                 textDecoration: 'none',
                 fontWeight: 600
               }}
@@ -287,46 +273,37 @@ export default function Login() {
             disabled={loading}
             style={{
               width: '100%',
-              padding: '14px',
-              background: loading ? '#a5b4fc' : '#4f46e5',
+              padding: isMobile ? '12px' : '14px',
+              background: loading ? '#93c5fd' : '#2563eb',
               color: '#fff',
               border: 'none',
-              borderRadius: 10,
-              fontSize: 16,
+              borderRadius: 8,
+              fontSize: isSmallMobile ? 15 : 16,
               fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
-              marginBottom: 20,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)'
+              marginBottom: isMobile ? 16 : 20
             }}
-            onMouseEnter={(e) => !loading && (e.currentTarget.style.background = '#4338ca')}
-            onMouseLeave={(e) => !loading && (e.currentTarget.style.background = '#4f46e5')}
+            onMouseEnter={(e) => !loading && (e.currentTarget.style.background = '#1e40af')}
+            onMouseLeave={(e) => !loading && (e.currentTarget.style.background = '#2563eb')}
           >
-            {loading ? 'Memproses...' : (
-              <>
-                Masuk
-                <ArrowRight size={18} />
-              </>
-            )}
+            {loading ? 'Memproses...' : 'Masuk'}
           </button>
         </form>
 
         {/* Register Link */}
         <p style={{
           textAlign: 'center',
-          marginTop: 24,
-          fontSize: 14,
-          color: '#64748b'
+          marginTop: isMobile ? 20 : 24,
+          fontSize: isSmallMobile ? 13 : 14,
+          color: '#64748b',
+          lineHeight: 1.5
         }}>
           Belum punya akun?{' '}
           <Link
             to="/register"
             style={{
-              color: '#4f46e5',
+              color: '#2563eb',
               textDecoration: 'none',
               fontWeight: 600
             }}
@@ -339,12 +316,13 @@ export default function Login() {
       {/* Footer */}
       <div style={{
         position: 'absolute',
-        bottom: 24,
+        bottom: isMobile ? 16 : 24,
         left: 0,
         right: 0,
         textAlign: 'center',
-        fontSize: 12,
-        color: '#94a3b8'
+        fontSize: isSmallMobile ? 11 : 12,
+        color: '#94a3b8',
+        padding: '0 16px'
       }}>
         © 2024 ServPoint. All rights reserved.
       </div>

@@ -1,0 +1,20 @@
+$kind: http-request
+name: REGISTER UMKM
+url: http://localhost:8000/api/auth/register-owner/
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"email\": \"owner2@mail.com\",\r
+
+    \  \"username\": \"owner2\",\r
+
+    \  \"name\": \"owner2\",\r
+
+    \  \"password\": \"SecurePass234!\",\r
+
+    \  \"password2\": \"SecurePass234!\"\r
+
+    }"
+order: 1777462158254

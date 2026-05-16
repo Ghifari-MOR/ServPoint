@@ -1,0 +1,5 @@
+$kind: http-request
+name: UMKM LIST
+url: http://localhost:8000/api/umkm/
+method: GET
+order: 4496402612129836

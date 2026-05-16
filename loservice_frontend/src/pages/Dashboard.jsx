@@ -1,21 +1,50 @@
-import { useContext } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
+import LogoutConfirmModal from '../components/LogoutConfirmModal'
 
 export default function Dashboard() {
   const { user, logout } = useContext(AuthContext)
   const navigate = useNavigate()
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
 
-  const handleLogout = () => {
-    if (window.confirm('Apakah Anda yakin ingin logout?')) {
-      const backendLoginUrl = 'http://127.0.0.1:8000/admin/login/'
-      logout()
-      if (user?.role === 'ADMIN') {
-        window.location.replace(backendLoginUrl)
+  // Auto-redirect based on role
+  useEffect(() => {
+    if (user) {
+      const role = user.role?.toUpperCase()
+      console.log('[Dashboard] User role:', user.role, 'Uppercase:', role, 'Full user:', user)
+      if (role === 'USER') {
+        console.log('[Dashboard] Redirecting to /user-map')
+        navigate('/user-map', { replace: true })
+      } else if (role === 'OWNER') {
+        console.log('[Dashboard] Redirecting to /owner')
+        navigate('/owner', { replace: true })
+      } else if (role === 'ADMIN') {
+        console.log('[Dashboard] Redirecting to /admin')
+        navigate('/admin', { replace: true })
       } else {
-        navigate('/login')
+        console.log('[Dashboard] Unknown role, defaulting to /user-map')
+        navigate('/user-map', { replace: true })
       }
     }
+  }, [user, navigate])
+
+  const handleLogout = () => {
+    setShowLogoutModal(true)
+  }
+
+  const handleLogoutConfirm = () => {
+    const backendLoginUrl = 'http://127.0.0.1:8000/admin/login/'
+    logout()
+    if (user?.role === 'ADMIN') {
+      window.location.replace(backendLoginUrl)
+    } else {
+      navigate('/login')
+    }
+  }
+
+  const handleLogoutCancel = () => {
+    setShowLogoutModal(false)
   }
 
   return (
@@ -51,6 +80,11 @@ export default function Dashboard() {
           </button>
         )}
       </section>
+      <LogoutConfirmModal 
+        isOpen={showLogoutModal}
+        onConfirm={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
+      />
     </div>
   )
 }

@@ -229,6 +229,7 @@ class UMKMProduct(models.Model):
     umkm = models.ForeignKey(UMKM, on_delete=models.CASCADE, related_name="products")
     nama_produk = models.CharField(max_length=200)
     harga = models.DecimalField(max_digits=12, decimal_places=2)
+    image = models.ImageField(upload_to='products/', null=True, blank=True)
     image_url = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -1,0 +1,27 @@
+$kind: http-request
+name: CREATE PRODUCT
+url: http://localhost:8000/api/umkm-products/
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"umkm\": \"{61f60fe2-d591-49db-b001-bd271279b2ef}\",\r
+
+    \  \"nama_produk\": \"Laptop Dell XPS 13\",\r
+
+    \  \"deskripsi\": \"Laptop gaming dengan spek tinggi\",\r
+
+    \  \"harga\": 12000000,\r
+
+    \  \"stok\": 5,\r
+
+    \  \"kategori_produk\": \"laptop\"\r
+
+    }"
+auth:
+  credentials:
+    - key: token
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc3NDY2NTc5LCJpYXQiOjE3Nzc0NTkzNzksImp0aSI6IjE0NTMxNzIwMWQxNjQyODNhYTY4NDU1NmZlMjQwYzkwIiwidXNlcl9pZCI6ImI3ZTUyYzdjLWIxZDYtNGFjYS1hOWI5LTJhMWUzMWZhZTA0YyJ9.0FkcQhyJbBq4CP9gbYkWzDzgNMP3eF3NQHAoZYj3NkI
+  type: bearer
+order: 4473606347895033

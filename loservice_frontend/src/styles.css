@@ -8,7 +8,7 @@
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: radial-gradient(circle at 20% 20%, rgba(124, 58, 237, 0.08), transparent 36%),
+  background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.08), transparent 36%),
     radial-gradient(circle at 80% 10%, rgba(14, 165, 233, 0.08), transparent 34%),
     #0b1221;
   color: #e8edf5;
@@ -131,12 +131,12 @@ input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   color: #fff;
   padding: 12px;
@@ -148,7 +148,7 @@ textarea:focus {
 
 .btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.35);
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.35);
 }
 
 .btn:disabled {
@@ -265,7 +265,7 @@ textarea:focus {
 }
 
 .sidebar-user {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.16), rgba(14, 165, 233, 0.14));
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(14, 165, 233, 0.14));
   padding: 12px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -841,6 +841,12 @@ textarea:focus {
   gap: 16px;
 }
 
+.header-user span {
+  color: #0f172a;
+  font-weight: 500;
+  font-size: 14px;
+}
+
 .logout-btn {
   background: #ef4444;
   color: #fff;
@@ -1155,7 +1161,7 @@ textarea:focus {
 .review-avatar {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
   border-radius: 50%;
   display: flex;
   align-items: center;

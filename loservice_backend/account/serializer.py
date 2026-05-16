@@ -39,13 +39,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        # normalisasi role: terima lower/Title, simpan uppercase sesuai choices
-        role = attrs.get("role", "USER")
-        if role:
-            attrs["role"] = str(role).upper()
-        valid_roles = {choice[0] for choice in User.ROLE_CHOICES}
-        if attrs["role"] not in valid_roles:
-            raise serializers.ValidationError("Role harus salah satu dari: ADMIN, OWNER, USER")
+        # RegisterSerializer = USER ONLY (no role field)
+        attrs["role"] = "USER"  # Force USER role
 
         # alias password_confirm -> password2
         if attrs.get("password_confirm") and not attrs.get("password2"):
@@ -60,8 +55,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data.pop("password2", None)
         validated_data.pop("password_confirm", None)
         username = validated_data.pop("username", None) or validated_data.get("email")
+        
+        # Set name: use provided name, or fallback to email
         if not validated_data.get("name"):
-            validated_data["name"] = ""
+            validated_data["name"] = validated_data.get("email", "User")
         
         # Create user
         user = User.objects.create_user(username=username, **validated_data)
@@ -75,14 +72,67 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+class RegisterOwnerSerializer(serializers.ModelSerializer):
+    """Serializer untuk registrasi UMKM Owner (role: OWNER)"""
+    password = serializers.CharField(write_only=True)
+    password2 = serializers.CharField(write_only=True, required=False)
+    password_confirm = serializers.CharField(write_only=True, required=False)
+
+    class Meta:
+        model = User
+        fields = [
+            "user_id",
+            "email",
+            "username",
+            "name",
+            "password",
+            "password2",
+            "password_confirm",
+        ]
+        read_only_fields = ["user_id"]
+        extra_kwargs = {
+            "password": {"write_only": True},
+            "password2": {"write_only": True},
+            "password_confirm": {"write_only": True},
+            "username": {"required": False, "allow_blank": True},
+            "name": {"required": False, "allow_blank": True},
+        }
+
+    def validate(self, attrs):
+        # RegisterOwnerSerializer = OWNER ONLY (no role field, fixed to OWNER)
+        attrs["role"] = "OWNER"  # Force OWNER role
+
+        # alias password_confirm -> password2
+        if attrs.get("password_confirm") and not attrs.get("password2"):
+            attrs["password2"] = attrs["password_confirm"]
+
+        if attrs.get("password") != attrs.get("password2"):
+            raise serializers.ValidationError("Password tidak sama.")
+        validate_password(attrs["password"])
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop("password2", None)
+        validated_data.pop("password_confirm", None)
+        username = validated_data.pop("username", None) or validated_data.get("email")
+        
+        # Set name: use provided name, or fallback to email
+        if not validated_data.get("name"):
+            validated_data["name"] = validated_data.get("email", "Owner")
+        
+        # Create user dengan role OWNER
+        user = User.objects.create_user(username=username, **validated_data)
+        return user
+
+
 class UserSerializer(serializers.ModelSerializer):
     profile_picture_url = serializers.SerializerMethodField()
     profile_picture = serializers.ImageField(required=False, allow_null=True)
     
     class Meta:
         model = User
-        fields = ["user_id", "email", "username", "name", "role", "profile_picture", "profile_picture_url"]
-        read_only_fields = ["user_id", "role", "profile_picture_url"]
+        fields = ["user_id", "email", "username", "name", "role", "profile_picture", "profile_picture_url", "is_staff", "is_superuser"]
+        read_only_fields = ["user_id", "role", "profile_picture_url", "is_staff", "is_superuser"]
     
     def get_profile_picture_url(self, obj):
         if obj.profile_picture:
@@ -144,10 +194,30 @@ class UMKMServiceSerializer(serializers.ModelSerializer):
 
 
 class UMKMProductSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False, allow_null=True, write_only=False)
+    image_url_full = serializers.SerializerMethodField()
+    
     class Meta:
         model = UMKMProduct
-        fields = ['product_id', 'umkm', 'nama_produk', 'harga', 'image_url', 'created_at']
-        read_only_fields = ['product_id', 'created_at']
+        fields = ['product_id', 'umkm', 'nama_produk', 'harga', 'image', 'image_url', 'image_url_full', 'created_at']
+        read_only_fields = ['product_id', 'created_at', 'image_url']
+    
+    def get_image_url_full(self, obj):
+        """Return full URL for uploaded image if exists"""
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+    
+    def to_representation(self, instance):
+        """Customize response - use full image URL if available"""
+        data = super().to_representation(instance)
+        # Prioritize image_url_full (uploaded file) over image_url (text field)
+        if data['image_url_full']:
+            data['image'] = data['image_url_full']
+        return data
 
 
 class UMKMGallerySerializer(serializers.ModelSerializer):
@@ -182,7 +252,21 @@ class UMKMReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = UMKMReview
         fields = ['review_id', 'umkm', 'user', 'user_name', 'user_email', 'rating', 'comment', 'reply', 'reply_at', 'created_at']
-        read_only_fields = ['review_id', 'user', 'created_at', 'reply_at']
+        read_only_fields = ['review_id', 'user', 'user_name', 'user_email', 'created_at', 'reply', 'reply_at']
+        extra_kwargs = {
+            'rating': {'required': True},
+            'comment': {'required': True},
+            'umkm': {'required': True},
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ensure context is passed to nested UserSerializer
+        if 'request' in self.context:
+            self.fields['user'] = UserSerializer(context=self.context)
+        # Remove user from required fields since it's set in perform_create
+        if 'user' in self.fields:
+            self.fields['user'].required = False
 
 
 class UMKMSerializer(serializers.ModelSerializer):

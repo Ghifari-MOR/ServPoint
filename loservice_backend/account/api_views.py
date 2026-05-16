@@ -9,16 +9,14 @@ from django.contrib.auth import get_user_model
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .models import Kategori, UMKM, UMKMService, UMKMProduct, UMKMGallery, UMKMReview
 from .serializer import (
-    KategoriSerializer, 
-    UMKMSerializer, 
-    UserSerializer,
-    UMKMServiceSerializer,
-    UMKMProductSerializer,
-    UMKMGallerySerializer,
-    UMKMReviewSerializer
+    KategoriSerializer, UMKMSerializer, UserSerializer, UMKMServiceSerializer,
+    UMKMProductSerializer, UMKMGallerySerializer, UMKMReviewSerializer
 )
 
 User = get_user_model()
@@ -26,6 +24,7 @@ User = get_user_model()
 
 class IsOwnerOrAdminForWrite(BasePermission):
     """Allow anyone to read; only authenticated OWNER/ADMIN can write."""
+    message = "Anda tidak memiliki izin untuk melakukan action ini. Role Anda harus OWNER atau ADMIN."
 
     def has_permission(self, request, view):
         # Allow GET, HEAD, OPTIONS for everyone (public read)
@@ -34,6 +33,7 @@ class IsOwnerOrAdminForWrite(BasePermission):
         
         # For write operations, require authentication
         if not request.user or not request.user.is_authenticated:
+            self.message = "Anda harus login terlebih dahulu."
             return False
 
         # Allow staff and superuser
@@ -42,18 +42,61 @@ class IsOwnerOrAdminForWrite(BasePermission):
 
         # Allow OWNER and ADMIN roles
         role = getattr(request.user, "role", "")
-        return str(role).upper() in {"OWNER", "ADMIN"}
+        role_upper = str(role).upper() if role else ""
+        
+        if role_upper not in {"OWNER", "ADMIN"}:
+            self.message = f"Role Anda adalah '{role}', sementara hanya OWNER atau ADMIN yang dapat melakukan ini."
+            return False
+            
+        return True
+
+
+class IsAdminForRead(BasePermission):
+    """Only admin/staff can list all users."""
+    message = "Hanya admin yang dapat mengakses resource ini."
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Allow staff and superuser
+        if getattr(request.user, "is_staff", False) or getattr(request.user, "is_superuser", False):
+            return True
+        
+        # Allow ADMIN role
+        role = str(getattr(request.user, "role", "")).upper()
+        return role == "ADMIN"
+
+
+class IsAuthenticatedForUserEndpoint(BasePermission):
+    """Allow authenticated users to access their own profile, admin can access all."""
+    message = "Anda harus login untuk mengakses endpoint ini."
+
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated
+    
+    def has_object_permission(self, request, view, obj):
+        # Allow user to access/modify their own profile
+        if obj.user_id == request.user.user_id:
+            return True
+        
+        # Allow admin/staff to access any profile
+        if getattr(request.user, "is_staff", False) or getattr(request.user, "is_superuser", False):
+            return True
+        
+        role = str(getattr(request.user, "role", "")).upper()
+        return role == "ADMIN"
 
 
 class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet untuk CRUD user.
-    - GET: Staff/superuser bisa lihat semua, user biasa hanya data diri
+    - GET: Only admin/staff can list all users, regular user can only see themselves
     - PATCH/PUT: User hanya bisa update data diri sendiri
     - DELETE: User hanya bisa delete akun sendiri
     """
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedForUserEndpoint]
     
     def get_queryset(self):
         is_staff = getattr(self.request.user, "is_staff", False)
@@ -151,7 +194,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class UMKMServiceViewSet(viewsets.ModelViewSet):
     serializer_class = UMKMServiceSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsOwnerOrAdminForWrite]
     
     def get_queryset(self):
         queryset = UMKMService.objects.select_related('umkm').order_by('-created_at')
@@ -161,34 +204,37 @@ class UMKMServiceViewSet(viewsets.ModelViewSet):
         if umkm_id:
             queryset = queryset.filter(umkm_id=umkm_id)
         
-        # Owner hanya bisa edit/delete service dari UMKM miliknya
-        # Tapi semua user bisa melihat (GET) service dari UMKM manapun
-        role = str(getattr(self.request.user, "role", "")).upper()
-        is_staff = getattr(self.request.user, "is_staff", False)
-        is_superuser = getattr(self.request.user, "is_superuser", False)
-        
-        # Hanya filter untuk non-admin jika bukan GET request
-        if self.action not in ['list', 'retrieve']:
-            if not (is_staff or is_superuser or role == "ADMIN"):
-                # Filter by user's UMKM untuk write operations
-                queryset = queryset.filter(umkm__user=self.request.user)
-        
         return queryset
     
+    def get_serializer_context(self):
+        """Add request to serializer context for building absolute URLs"""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+    
     def perform_create(self, serializer):
-        # Pastikan user adalah owner dari UMKM
+        # Get UMKM from request data
         umkm_id = self.request.data.get('umkm')
-        if umkm_id:
-            umkm = UMKM.objects.filter(umkm_id=umkm_id, user=self.request.user).first()
-            if not umkm:
-                from rest_framework.exceptions import PermissionDenied
-                raise PermissionDenied("Anda tidak memiliki izin untuk menambah service ke UMKM ini")
-        serializer.save()
+        if not umkm_id:
+            raise serializers.ValidationError({"umkm": "UMKM ID diperlukan"})
+        
+        try:
+            umkm = UMKM.objects.get(umkm_id=umkm_id)
+        except UMKM.DoesNotExist:
+            raise serializers.ValidationError({"umkm": "UMKM tidak ditemukan"})
+        
+        # Verify ownership
+        if umkm.user != self.request.user and not (self.request.user.is_staff or self.request.user.is_superuser):
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Anda tidak memiliki izin untuk menambah service ke UMKM ini")
+        
+        logger.info(f'[CREATE SERVICE] User: {self.request.user.email}, UMKM: {umkm.nama_umkm}, Service: {self.request.data.get("nama_service")}')
+        serializer.save(umkm=umkm)
 
 
 class UMKMProductViewSet(viewsets.ModelViewSet):
     serializer_class = UMKMProductSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsOwnerOrAdminForWrite]
     
     def get_queryset(self):
         queryset = UMKMProduct.objects.select_related('umkm').order_by('-created_at')
@@ -198,32 +244,37 @@ class UMKMProductViewSet(viewsets.ModelViewSet):
         if umkm_id:
             queryset = queryset.filter(umkm_id=umkm_id)
         
-        # Owner hanya bisa edit/delete product dari UMKM miliknya
-        # Tapi semua user bisa melihat (GET) product dari UMKM manapun
-        role = str(getattr(self.request.user, "role", "")).upper()
-        is_staff = getattr(self.request.user, "is_staff", False)
-        is_superuser = getattr(self.request.user, "is_superuser", False)
-        
-        # Hanya filter untuk non-admin jika bukan GET request
-        if self.action not in ['list', 'retrieve']:
-            if not (is_staff or is_superuser or role == "ADMIN"):
-                queryset = queryset.filter(umkm__user=self.request.user)
-        
         return queryset
     
+    def get_serializer_context(self):
+        """Add request to serializer context for building absolute URLs"""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+    
     def perform_create(self, serializer):
+        # Get UMKM from request data
         umkm_id = self.request.data.get('umkm')
-        if umkm_id:
-            umkm = UMKM.objects.filter(umkm_id=umkm_id, user=self.request.user).first()
-            if not umkm:
-                from rest_framework.exceptions import PermissionDenied
-                raise PermissionDenied("Anda tidak memiliki izin untuk menambah produk ke UMKM ini")
-        serializer.save()
+        if not umkm_id:
+            raise serializers.ValidationError({"umkm": "UMKM ID diperlukan"})
+        
+        try:
+            umkm = UMKM.objects.get(umkm_id=umkm_id)
+        except UMKM.DoesNotExist:
+            raise serializers.ValidationError({"umkm": "UMKM tidak ditemukan"})
+        
+        # Verify ownership
+        if umkm.user != self.request.user and not (self.request.user.is_staff or self.request.user.is_superuser):
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Anda tidak memiliki izin untuk menambah produk ke UMKM ini")
+        
+        logger.info(f'[CREATE PRODUCT] User: {self.request.user.email}, UMKM: {umkm.nama_umkm}, Produk: {self.request.data.get("nama_produk")}')
+        serializer.save(umkm=umkm)
 
 
 class UMKMGalleryViewSet(viewsets.ModelViewSet):
     serializer_class = UMKMGallerySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsOwnerOrAdminForWrite]
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -238,46 +289,24 @@ class UMKMGalleryViewSet(viewsets.ModelViewSet):
         if umkm_id:
             queryset = queryset.filter(umkm_id=umkm_id)
         
-        # Owner hanya bisa edit/delete gallery dari UMKM miliknya
-        # Tapi semua user bisa melihat (GET) gallery dari UMKM manapun
-        role = str(getattr(self.request.user, "role", "")).upper()
-        is_staff = getattr(self.request.user, "is_staff", False)
-        is_superuser = getattr(self.request.user, "is_superuser", False)
-        
-        # Hanya filter untuk non-admin jika bukan GET request
-        if self.action not in ['list', 'retrieve']:
-            if not (is_staff or is_superuser or role == "ADMIN"):
-                queryset = queryset.filter(umkm__user=self.request.user)
-        
         return queryset
     
     def perform_create(self, serializer):
+        # Get UMKM from request data
         umkm_id = self.request.data.get('umkm')
-        print(f"[GALLERY DEBUG] umkm_id from request: {umkm_id}")
-        print(f"[GALLERY DEBUG] Request data keys: {self.request.data.keys()}")
-        print(f"[GALLERY DEBUG] Current user: {self.request.user.email}")
-        print(f"[GALLERY DEBUG] User ID: {self.request.user.user_id}")
-        
         if not umkm_id:
-            from rest_framework.exceptions import ValidationError
-            raise ValidationError("Field 'umkm' is required")
+            raise serializers.ValidationError({"umkm": "UMKM ID diperlukan"})
         
-        # Cari UMKM milik user ini
-        umkm = UMKM.objects.filter(umkm_id=umkm_id, user=self.request.user).first()
-        print(f"[GALLERY DEBUG] UMKM found for current user: {umkm}")
+        try:
+            umkm = UMKM.objects.get(umkm_id=umkm_id)
+        except UMKM.DoesNotExist:
+            raise serializers.ValidationError({"umkm": "UMKM tidak ditemukan"})
         
-        if not umkm:
-            # Debug: check if UMKM exists at all
-            umkm_exists = UMKM.objects.filter(umkm_id=umkm_id).first()
-            print(f"[GALLERY DEBUG] UMKM exists (any user): {umkm_exists}")
-            if umkm_exists:
-                print(f"[GALLERY DEBUG] UMKM owner email: {umkm_exists.user.email}")
-                print(f"[GALLERY DEBUG] UMKM owner ID: {umkm_exists.user.user_id}")
-            
+        # Verify ownership
+        if umkm.user != self.request.user and not (self.request.user.is_staff or self.request.user.is_superuser):
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied("Anda tidak memiliki izin untuk menambah foto ke UMKM ini")
         
-        # Save dengan umkm object yang sudah divalidasi
         serializer.save(umkm=umkm)
 
 
@@ -292,8 +321,46 @@ class UMKMReviewViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(umkm_id=umkm_id)
         return queryset.order_by('-created_at')
     
+    def get_serializer_context(self):
+        """Add request to serializer context for building absolute URLs in nested UserSerializer"""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+    
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        # Explicitly verify authenticated user and log the action
+        user = self.request.user
+        
+        # Validate authentication
+        if not user or not user.is_authenticated:
+            logger.error('[UMKMReview] Create attempt without authentication')
+            raise Response(
+                {'error': 'User tidak terautentikasi. Silakan login terlebih dahulu.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Log who is creating the review
+        logger.info(f'[UMKMReview] Review being created by user: {user.email} (ID: {user.user_id}) with role: {user.role}')
+        
+        # Save review with authenticated user
+        review = serializer.save(user=user)
+        
+        logger.info(f'[UMKMReview] Review {review.review_id} successfully created for user {user.email}')
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def debug_auth_user(self, request):
+        """Debug endpoint to check authenticated user"""
+        user = request.user
+        return Response({
+            'authenticated': user.is_authenticated,
+            'user_id': str(user.user_id) if hasattr(user, 'user_id') else None,
+            'email': user.email,
+            'username': user.username,
+            'name': user.name if hasattr(user, 'name') else None,
+            'role': user.role if hasattr(user, 'role') else None,
+            'is_staff': user.is_staff,
+            'is_superuser': user.is_superuser,
+        })
     
     @action(detail=True, methods=['post'], url_path='reply')
     def add_reply(self, request, pk=None):
@@ -326,7 +393,7 @@ class UMKMReviewViewSet(viewsets.ModelViewSet):
 class KategoriViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Kategori.objects.all().order_by("nama_kategori")
     serializer_class = KategoriSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
 
 class UMKMViewSet(viewsets.ModelViewSet):
@@ -378,6 +445,11 @@ class UMKMViewSet(viewsets.ModelViewSet):
                 | Q(user__name__icontains=q)
             )
 
+        # Filter by kategori if provided
+        kategori = (self.request.query_params.get("kategori") or "").strip()
+        if kategori:
+            queryset = queryset.filter(kategori__nama_kategori__iexact=kategori)
+
         return queryset
 
     def get_serializer_context(self):
@@ -392,11 +464,15 @@ class UMKMViewSet(viewsets.ModelViewSet):
         is_superuser = getattr(request.user, "is_superuser", False)
         role = str(getattr(request.user, "role", "")).upper()
         
+        print(f"[APPROVE DEBUG] user={request.user.email}, is_staff={is_staff}, is_superuser={is_superuser}, role='{role}'")
+        
         # Hanya staff/superuser yang bisa approve
         can_approve = is_staff or is_superuser or role == "ADMIN"
         
         if not can_approve:
-            return Response({"detail": "Anda tidak memiliki izin untuk menyetujui UMKM."}, status=403)
+            error_msg = f"Anda tidak memiliki izin untuk menyetujui UMKM. (role={role}, is_staff={is_staff}, is_superuser={is_superuser})"
+            print(f"[APPROVE DEBUG] Permission denied: {error_msg}")
+            return Response({"detail": error_msg}, status=403)
 
         umkm = self.get_object()
         umkm.status = "APPROVED"

@@ -1,0 +1,27 @@
+$kind: http-request
+name: UPLOAD GALLERY
+url: http://localhost:8000/api/umkm-gallery/
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: umkm
+      value: 7421df67-3432-45c0-a29e-7df46be9dd05
+      description: ""
+      disabled: false
+    - type: file
+      key: image
+      src: []
+      description: ""
+      disabled: false
+    - type: text
+      key: caption
+      value: Tokok dihari peluncuran
+      description: ""
+      disabled: false
+auth:
+  type: bearer
+  credentials:
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc3NDY2NTc5LCJpYXQiOjE3Nzc0NTkzNzksImp0aSI6IjE0NTMxNzIwMWQxNjQyODNhYTY4NDU1NmZlMjQwYzkwIiwidXNlcl9pZCI6ImI3ZTUyYzdjLWIxZDYtNGFjYS1hOWI5LTJhMWUzMWZhZTA0YyJ9.0FkcQhyJbBq4CP9gbYkWzDzgNMP3eF3NQHAoZYj3NkI
+order: 1986359595879040

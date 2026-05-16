@@ -1,7 +1,6 @@
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
-import Sidebar from '../components/Sidebar'
 import api from '../services/api'
 import { 
   User, 
@@ -25,8 +24,19 @@ export default function UserSettings() {
   const { user, logout, updateUser } = useContext(AuthContext)
   const navigate = useNavigate()
 
+  // Responsive state
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+  const isMobile = windowWidth <= 768
+
   // Active tab
   const [activeTab, setActiveTab] = useState('profile')
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // Profile form
   const [profileForm, setProfileForm] = useState({
@@ -183,21 +193,19 @@ export default function UserSettings() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc' }}>
-      <Sidebar />
-
-      <main style={{ flex: 1, marginLeft: 240, padding: '32px 48px' }}>
+      <main style={{ flex: 1, padding: isMobile ? '20px 16px' : '32px 48px' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
           {/* Header */}
-          <div style={{ marginBottom: 32 }}>
+          <div style={{ marginBottom: isMobile ? 20 : 32 }}>
             <button
               onClick={() => navigate(-1)}
               style={{
                 background: 'none',
                 border: 'none',
                 color: '#64748b',
-                fontSize: 14,
+                fontSize: isMobile ? 12 : 14,
                 cursor: 'pointer',
-                marginBottom: 16,
+                marginBottom: isMobile ? 12 : 16,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8
@@ -205,17 +213,28 @@ export default function UserSettings() {
             >
               ← Kembali
             </button>
-            <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: '#0f172a' }}>
+            <h1 style={{ margin: 0, fontSize: isMobile ? 24 : 32, fontWeight: 700, color: '#0f172a' }}>
               Pengaturan Akun
             </h1>
-            <p style={{ margin: '8px 0 0 0', fontSize: 16, color: '#64748b' }}>
+            <p style={{ margin: isMobile ? '6px 0 0 0' : '8px 0 0 0', fontSize: isMobile ? 13 : 16, color: '#64748b' }}>
               Kelola informasi akun dan preferensi Anda
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 24 }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: isMobile ? '1fr' : '240px 1fr', 
+            gap: isMobile ? 16 : 24
+          }}>
             {/* Sidebar Tabs */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: isMobile ? 'row' : 'column', 
+              gap: isMobile ? 8 : 8,
+              overflowX: isMobile ? 'auto' : 'visible',
+              paddingBottom: isMobile ? 8 : 0,
+              WebkitOverflowScrolling: 'touch'
+            }}>
               {tabs.map((tab) => {
                 const Icon = tab.icon
                 return (
@@ -225,46 +244,60 @@ export default function UserSettings() {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 12,
-                      padding: '12px 16px',
+                      gap: isMobile ? 6 : 12,
+                      padding: isMobile ? '8px 12px' : '12px 16px',
                       background: activeTab === tab.id ? '#fff' : 'transparent',
                       border: activeTab === tab.id ? '1px solid #e2e8f0' : '1px solid transparent',
-                      borderRadius: 12,
-                      fontSize: 14,
+                      borderRadius: isMobile ? 10 : 12,
+                      fontSize: isMobile ? 12 : 14,
                       fontWeight: activeTab === tab.id ? 600 : 500,
-                      color: activeTab === tab.id ? '#4f46e5' : '#64748b',
+                      color: activeTab === tab.id ? '#3b82f6' : '#64748b',
                       cursor: 'pointer',
                       textAlign: 'left',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0
                     }}
                   >
-                    <Icon size={18} />
-                    {tab.label}
+                    <Icon size={isMobile ? 16 : 18} />
+                    {isMobile ? '' : tab.label}
+                    {isMobile && activeTab === tab.id && <span style={{ fontSize: 10 }}>{tab.label}</span>}
                   </button>
                 )
               })}
             </div>
 
             {/* Content Area */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 32 }}>
+            <div style={{ 
+              background: '#fff', 
+              borderRadius: isMobile ? 12 : 16, 
+              border: '1px solid #e2e8f0', 
+              padding: isMobile ? 20 : 32 
+            }}>
               {/* Profile Tab */}
               {activeTab === 'profile' && (
                 <div>
-                  <h2 style={{ margin: '0 0 24px 0', fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
+                  <h2 style={{ 
+                    margin: isMobile ? '0 0 16px 0' : '0 0 24px 0', 
+                    fontSize: isMobile ? 18 : 20, 
+                    fontWeight: 700, 
+                    color: '#0f172a' 
+                  }}>
                     Informasi Profil
                   </h2>
 
                   {profileSuccess && (
                     <div style={{
-                      padding: 16,
+                      padding: isMobile ? 12 : 16,
                       background: '#d1fae5',
                       border: '1px solid #a7f3d0',
                       borderRadius: 12,
-                      marginBottom: 24,
+                      marginBottom: isMobile ? 16 : 24,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 12,
-                      color: '#065f46'
+                      color: '#065f46',
+                      fontSize: isMobile ? 13 : 14
                     }}>
                       <CheckCircle size={20} />
                       {profileSuccess}
@@ -273,15 +306,16 @@ export default function UserSettings() {
 
                   {profileError && (
                     <div style={{
-                      padding: 16,
+                      padding: isMobile ? 12 : 16,
                       background: '#fee2e2',
                       border: '1px solid #fecaca',
                       borderRadius: 12,
-                      marginBottom: 24,
+                      marginBottom: isMobile ? 16 : 24,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 12,
-                      color: '#991b1b'
+                      color: '#991b1b',
+                      fontSize: isMobile ? 13 : 14
                     }}>
                       <AlertCircle size={20} />
                       {profileError}
@@ -290,15 +324,21 @@ export default function UserSettings() {
 
                   <form onSubmit={handleUpdateProfile}>
                     {/* Profile Picture Upload */}
-                    <div style={{ marginBottom: 32, display: 'flex', alignItems: 'center', gap: 24 }}>
-                      <div style={{ position: 'relative' }}>
+                    <div style={{ 
+                      marginBottom: isMobile ? 20 : 32, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: isMobile ? 16 : 24,
+                      flexDirection: isMobile ? 'column' : 'row'
+                    }}>
+                      <div style={{ position: 'relative', flexShrink: 0 }}>
                         {profilePicturePreview ? (
                           <img 
                             src={profilePicturePreview} 
                             alt="Profile"
                             style={{
-                              width: 96,
-                              height: 96,
+                              width: isMobile ? 80 : 96,
+                              height: isMobile ? 80 : 96,
                               borderRadius: '50%',
                               objectFit: 'cover',
                               border: '4px solid #e0e7ff'
@@ -306,15 +346,15 @@ export default function UserSettings() {
                           />
                         ) : (
                           <div style={{
-                            width: 96,
-                            height: 96,
+                            width: isMobile ? 80 : 96,
+                            height: isMobile ? 80 : 96,
                             borderRadius: '50%',
                             background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)',
                             display: 'grid',
                             placeItems: 'center',
-                            fontSize: 36,
+                            fontSize: isMobile ? 28 : 36,
                             fontWeight: 700,
-                            color: '#4f46e5',
+                            color: '#3b82f6',
                             border: '4px solid #e0e7ff'
                           }}>
                             {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
@@ -326,10 +366,10 @@ export default function UserSettings() {
                             position: 'absolute',
                             bottom: 0,
                             right: 0,
-                            width: 32,
-                            height: 32,
+                            width: isMobile ? 28 : 32,
+                            height: isMobile ? 28 : 32,
                             borderRadius: '50%',
-                            background: '#4f46e5',
+                            background: '#3b82f6',
                             display: 'grid',
                             placeItems: 'center',
                             cursor: 'pointer',
@@ -337,7 +377,7 @@ export default function UserSettings() {
                             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                           }}
                         >
-                          <Camera size={16} color="#fff" />
+                          <Camera size={isMobile ? 14 : 16} color="#fff" />
                         </label>
                         <input
                           id="profile-picture-upload"
@@ -347,11 +387,21 @@ export default function UserSettings() {
                           style={{ display: 'none' }}
                         />
                       </div>
-                      <div>
-                        <h3 style={{ margin: '0 0 4px 0', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h3 style={{ 
+                          margin: '0 0 4px 0', 
+                          fontSize: isMobile ? 15 : 16, 
+                          fontWeight: 600, 
+                          color: '#0f172a' 
+                        }}>
                           Foto Profil
                         </h3>
-                        <p style={{ margin: '0 0 12px 0', fontSize: 13, color: '#64748b' }}>
+                        <p style={{ 
+                          margin: '0 0 12px 0', 
+                          fontSize: isMobile ? 12 : 13, 
+                          color: '#64748b',
+                          lineHeight: 1.4
+                        }}>
                           JPG, PNG atau GIF. Maksimal 5MB.
                         </p>
                         <label
@@ -360,24 +410,31 @@ export default function UserSettings() {
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 6,
-                            padding: '8px 16px',
+                            padding: isMobile ? '8px 12px' : '8px 16px',
                             background: '#f8fafc',
                             border: '1px solid #e2e8f0',
                             borderRadius: 8,
-                            fontSize: 13,
+                            fontSize: isMobile ? 12 : 13,
                             fontWeight: 500,
-                            color: '#4f46e5',
-                            cursor: 'pointer'
+                            color: '#3b82f6',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
                           }}
                         >
-                          <Upload size={16} />
+                          <Upload size={isMobile ? 14 : 16} />
                           Upload Foto
                         </label>
                       </div>
                     </div>
 
-                    <div style={{ marginBottom: 20 }}>
-                      <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                    <div style={{ marginBottom: isMobile ? 16 : 20 }}>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: isMobile ? 6 : 8, 
+                        fontSize: isMobile ? 13 : 14, 
+                        fontWeight: 600, 
+                        color: '#334155' 
+                      }}>
                         Nama Lengkap
                       </label>
                       <input
@@ -386,17 +443,27 @@ export default function UserSettings() {
                         onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
+                          padding: isMobile ? '10px 12px' : '12px 16px',
                           border: '1px solid #cbd5e1',
                           borderRadius: 8,
-                          fontSize: 14
+                          fontSize: isMobile ? 13 : 14,
+                          boxSizing: 'border-box',
+                          transition: 'border-color 0.2s'
                         }}
                         placeholder="Masukkan nama lengkap"
+                        onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                        onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
                       />
                     </div>
 
-                    <div style={{ marginBottom: 20 }}>
-                      <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                    <div style={{ marginBottom: isMobile ? 16 : 20 }}>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: isMobile ? 6 : 8, 
+                        fontSize: isMobile ? 13 : 14, 
+                        fontWeight: 600, 
+                        color: '#334155' 
+                      }}>
                         Email
                       </label>
                       <input
@@ -405,17 +472,27 @@ export default function UserSettings() {
                         onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
+                          padding: isMobile ? '10px 12px' : '12px 16px',
                           border: '1px solid #cbd5e1',
                           borderRadius: 8,
-                          fontSize: 14
+                          fontSize: isMobile ? 13 : 14,
+                          boxSizing: 'border-box',
+                          transition: 'border-color 0.2s'
                         }}
                         placeholder="email@example.com"
+                        onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                        onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
                       />
                     </div>
 
-                    <div style={{ marginBottom: 20 }}>
-                      <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                    <div style={{ marginBottom: isMobile ? 16 : 20 }}>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: isMobile ? 6 : 8, 
+                        fontSize: isMobile ? 13 : 14, 
+                        fontWeight: 600, 
+                        color: '#334155' 
+                      }}>
                         Username
                       </label>
                       <input
@@ -424,12 +501,16 @@ export default function UserSettings() {
                         onChange={(e) => setProfileForm({ ...profileForm, username: e.target.value })}
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
+                          padding: isMobile ? '10px 12px' : '12px 16px',
                           border: '1px solid #cbd5e1',
                           borderRadius: 8,
-                          fontSize: 14
+                          fontSize: isMobile ? 13 : 14,
+                          boxSizing: 'border-box',
+                          transition: 'border-color 0.2s'
                         }}
                         placeholder="username"
+                        onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                        onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
                       />
                     </div>
 
@@ -439,18 +520,21 @@ export default function UserSettings() {
                       style={{
                         display: 'flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         gap: 8,
-                        padding: '12px 24px',
-                        background: profileSaving ? '#94a3b8' : 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                        width: isMobile ? '100%' : 'auto',
+                        padding: isMobile ? '10px 16px' : '12px 24px',
+                        background: profileSaving ? '#94a3b8' : 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
                         border: 'none',
                         borderRadius: 8,
                         color: '#fff',
-                        fontSize: 14,
+                        fontSize: isMobile ? 13 : 14,
                         fontWeight: 600,
-                        cursor: profileSaving ? 'not-allowed' : 'pointer'
+                        cursor: profileSaving ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s'
                       }}
                     >
-                      <Save size={18} />
+                      <Save size={isMobile ? 16 : 18} />
                       {profileSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
                     </button>
                   </form>
@@ -460,50 +544,67 @@ export default function UserSettings() {
               {/* Password Tab */}
               {activeTab === 'password' && (
                 <div>
-                  <h2 style={{ margin: '0 0 8px 0', fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
+                  <h2 style={{ 
+                    margin: isMobile ? '0 0 4px 0' : '0 0 8px 0', 
+                    fontSize: isMobile ? 18 : 20, 
+                    fontWeight: 700, 
+                    color: '#0f172a' 
+                  }}>
                     Ubah Password
                   </h2>
-                  <p style={{ margin: '0 0 24px 0', fontSize: 14, color: '#64748b' }}>
+                  <p style={{ 
+                    margin: isMobile ? '0 0 16px 0' : '0 0 24px 0', 
+                    fontSize: isMobile ? 13 : 14, 
+                    color: '#64748b' 
+                  }}>
                     Pastikan password Anda kuat dan aman
                   </p>
 
                   {passwordSuccess && (
                     <div style={{
-                      padding: 16,
+                      padding: isMobile ? 12 : 16,
                       background: '#d1fae5',
                       border: '1px solid #a7f3d0',
                       borderRadius: 12,
-                      marginBottom: 24,
+                      marginBottom: isMobile ? 16 : 24,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 12,
-                      color: '#065f46'
+                      color: '#065f46',
+                      fontSize: isMobile ? 13 : 14
                     }}>
-                      <CheckCircle size={20} />
+                      <CheckCircle size={isMobile ? 18 : 20} />
                       {passwordSuccess}
                     </div>
                   )}
 
                   {passwordError && (
                     <div style={{
-                      padding: 16,
+                      padding: isMobile ? 12 : 16,
                       background: '#fee2e2',
                       border: '1px solid #fecaca',
                       borderRadius: 12,
-                      marginBottom: 24,
+                      marginBottom: isMobile ? 16 : 24,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 12,
-                      color: '#991b1b'
+                      color: '#991b1b',
+                      fontSize: isMobile ? 13 : 14
                     }}>
-                      <AlertCircle size={20} />
+                      <AlertCircle size={isMobile ? 18 : 20} />
                       {passwordError}
                     </div>
                   )}
 
                   <form onSubmit={handleChangePassword}>
-                    <div style={{ marginBottom: 20 }}>
-                      <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                    <div style={{ marginBottom: isMobile ? 16 : 20 }}>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: isMobile ? 6 : 8, 
+                        fontSize: isMobile ? 13 : 14, 
+                        fontWeight: 600, 
+                        color: '#334155' 
+                      }}>
                         Password Saat Ini
                       </label>
                       <div style={{ position: 'relative' }}>
@@ -514,35 +615,46 @@ export default function UserSettings() {
                           required
                           style={{
                             width: '100%',
-                            padding: '12px 16px',
-                            paddingRight: 48,
+                            padding: isMobile ? '10px 12px' : '12px 16px',
+                            paddingRight: isMobile ? 36 : 48,
                             border: '1px solid #cbd5e1',
                             borderRadius: 8,
-                            fontSize: 14
+                            fontSize: isMobile ? 13 : 14,
+                            boxSizing: 'border-box',
+                            transition: 'border-color 0.2s'
                           }}
                           placeholder="Masukkan password saat ini"
+                          onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                          onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
                           style={{
                             position: 'absolute',
-                            right: 12,
+                            right: isMobile ? 8 : 12,
                             top: '50%',
                             transform: 'translateY(-50%)',
                             background: 'none',
                             border: 'none',
                             cursor: 'pointer',
-                            color: '#64748b'
+                            color: '#64748b',
+                            padding: 4
                           }}
                         >
-                          {showPasswords.current ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {showPasswords.current ? <EyeOff size={isMobile ? 16 : 18} /> : <Eye size={isMobile ? 16 : 18} />}
                         </button>
                       </div>
                     </div>
 
-                    <div style={{ marginBottom: 20 }}>
-                      <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                    <div style={{ marginBottom: isMobile ? 16 : 20 }}>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: isMobile ? 6 : 8, 
+                        fontSize: isMobile ? 13 : 14, 
+                        fontWeight: 600, 
+                        color: '#334155' 
+                      }}>
                         Password Baru
                       </label>
                       <div style={{ position: 'relative' }}>
@@ -553,35 +665,46 @@ export default function UserSettings() {
                           required
                           style={{
                             width: '100%',
-                            padding: '12px 16px',
-                            paddingRight: 48,
+                            padding: isMobile ? '10px 12px' : '12px 16px',
+                            paddingRight: isMobile ? 36 : 48,
                             border: '1px solid #cbd5e1',
                             borderRadius: 8,
-                            fontSize: 14
+                            fontSize: isMobile ? 13 : 14,
+                            boxSizing: 'border-box',
+                            transition: 'border-color 0.2s'
                           }}
                           placeholder="Minimal 8 karakter"
+                          onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                          onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
                           style={{
                             position: 'absolute',
-                            right: 12,
+                            right: isMobile ? 8 : 12,
                             top: '50%',
                             transform: 'translateY(-50%)',
                             background: 'none',
                             border: 'none',
                             cursor: 'pointer',
-                            color: '#64748b'
+                            color: '#64748b',
+                            padding: 4
                           }}
                         >
-                          {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {showPasswords.new ? <EyeOff size={isMobile ? 16 : 18} /> : <Eye size={isMobile ? 16 : 18} />}
                         </button>
                       </div>
                     </div>
 
-                    <div style={{ marginBottom: 20 }}>
-                      <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                    <div style={{ marginBottom: isMobile ? 16 : 20 }}>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: isMobile ? 6 : 8, 
+                        fontSize: isMobile ? 13 : 14, 
+                        fontWeight: 600, 
+                        color: '#334155' 
+                      }}>
                         Konfirmasi Password Baru
                       </label>
                       <div style={{ position: 'relative' }}>
@@ -592,29 +715,34 @@ export default function UserSettings() {
                           required
                           style={{
                             width: '100%',
-                            padding: '12px 16px',
-                            paddingRight: 48,
+                            padding: isMobile ? '10px 12px' : '12px 16px',
+                            paddingRight: isMobile ? 36 : 48,
                             border: '1px solid #cbd5e1',
                             borderRadius: 8,
-                            fontSize: 14
+                            fontSize: isMobile ? 13 : 14,
+                            boxSizing: 'border-box',
+                            transition: 'border-color 0.2s'
                           }}
                           placeholder="Ketik ulang password baru"
+                          onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                          onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
                           style={{
                             position: 'absolute',
-                            right: 12,
+                            right: isMobile ? 8 : 12,
                             top: '50%',
                             transform: 'translateY(-50%)',
                             background: 'none',
                             border: 'none',
                             cursor: 'pointer',
-                            color: '#64748b'
+                            color: '#64748b',
+                            padding: 4
                           }}
                         >
-                          {showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {showPasswords.confirm ? <EyeOff size={isMobile ? 16 : 18} /> : <Eye size={isMobile ? 16 : 18} />}
                         </button>
                       </div>
                     </div>
@@ -625,18 +753,21 @@ export default function UserSettings() {
                       style={{
                         display: 'flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         gap: 8,
-                        padding: '12px 24px',
-                        background: passwordSaving ? '#94a3b8' : 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                        width: isMobile ? '100%' : 'auto',
+                        padding: isMobile ? '10px 16px' : '12px 24px',
+                        background: passwordSaving ? '#94a3b8' : 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
                         border: 'none',
                         borderRadius: 8,
                         color: '#fff',
-                        fontSize: 14,
+                        fontSize: isMobile ? 13 : 14,
                         fontWeight: 600,
-                        cursor: passwordSaving ? 'not-allowed' : 'pointer'
+                        cursor: passwordSaving ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s'
                       }}
                     >
-                      <Lock size={18} />
+                      <Lock size={isMobile ? 16 : 18} />
                       {passwordSaving ? 'Mengubah...' : 'Ubah Password'}
                     </button>
                   </form>
@@ -646,14 +777,23 @@ export default function UserSettings() {
               {/* Notifications Tab */}
               {activeTab === 'notifications' && (
                 <div>
-                  <h2 style={{ margin: '0 0 8px 0', fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
+                  <h2 style={{ 
+                    margin: isMobile ? '0 0 4px 0' : '0 0 8px 0', 
+                    fontSize: isMobile ? 18 : 20, 
+                    fontWeight: 700, 
+                    color: '#0f172a' 
+                  }}>
                     Preferensi Notifikasi
                   </h2>
-                  <p style={{ margin: '0 0 24px 0', fontSize: 14, color: '#64748b' }}>
+                  <p style={{ 
+                    margin: isMobile ? '0 0 16px 0' : '0 0 24px 0', 
+                    fontSize: isMobile ? 13 : 14, 
+                    color: '#64748b' 
+                  }}>
                     Atur notifikasi yang ingin Anda terima
                   </p>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 16 }}>
                     <NotificationToggle
                       label="Notifikasi Email"
                       description="Terima notifikasi penting melalui email"
@@ -682,21 +822,24 @@ export default function UserSettings() {
 
                   <button
                     style={{
-                      marginTop: 24,
+                      marginTop: isMobile ? 16 : 24,
                       display: 'flex',
                       alignItems: 'center',
+                      justifyContent: 'center',
                       gap: 8,
-                      padding: '12px 24px',
-                      background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                      width: isMobile ? '100%' : 'auto',
+                      padding: isMobile ? '10px 16px' : '12px 24px',
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
                       border: 'none',
                       borderRadius: 8,
                       color: '#fff',
-                      fontSize: 14,
+                      fontSize: isMobile ? 13 : 14,
                       fontWeight: 600,
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
                     }}
                   >
-                    <Save size={18} />
+                    <Save size={isMobile ? 16 : 18} />
                     Simpan Preferensi
                   </button>
                 </div>
@@ -705,11 +848,16 @@ export default function UserSettings() {
               {/* About Tab */}
               {activeTab === 'about' && (
                 <div>
-                  <h2 style={{ margin: '0 0 24px 0', fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
+                  <h2 style={{ 
+                    margin: isMobile ? '0 0 16px 0' : '0 0 24px 0', 
+                    fontSize: isMobile ? 18 : 20, 
+                    fontWeight: 700, 
+                    color: '#0f172a' 
+                  }}>
                     Tentang Aplikasi
                   </h2>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 16 : 20 }}>
                     <InfoCard
                       icon={<Info size={20} />}
                       title="Versi Aplikasi"
@@ -812,7 +960,7 @@ function NotificationToggle({ label, description, checked, onChange }) {
           left: 0,
           right: 0,
           bottom: 0,
-          background: checked ? '#4f46e5' : '#cbd5e1',
+          background: checked ? '#3b82f6' : '#cbd5e1',
           transition: '0.3s',
           borderRadius: 24
         }}>
@@ -847,11 +995,11 @@ function InfoCard({ icon, title, description, link }) {
       <div style={{
         width: 40,
         height: 40,
-        background: 'linear-gradient(135deg, #4f46e522 0%, #7c3aed22 100%)',
+        background: 'linear-gradient(135deg, #3b82f622 0%, #1e40af22 100%)',
         borderRadius: 10,
         display: 'grid',
         placeItems: 'center',
-        color: '#4f46e5'
+        color: '#3b82f6'
       }}>
         {icon}
       </div>
@@ -867,7 +1015,7 @@ function InfoCard({ icon, title, description, link }) {
         <a
           href={link}
           style={{
-            color: '#4f46e5',
+            color: '#3b82f6',
             fontSize: 14,
             fontWeight: 600,
             textDecoration: 'none'

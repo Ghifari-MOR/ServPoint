@@ -1,0 +1,25 @@
+$kind: http-request
+url: http://localhost:8000/api/umkm-services/
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"umkm\": \"{61f60fe2-d591-49db-b001-bd271279b2ef}\",\r
+
+    \  \"nama_service\": \"Servis Laptop\",\r
+
+    \  \"deskripsi\": \"Perbaikan semua jenis laptop\",\r
+
+    \  \"harga_min\": 100000,\r
+
+    \  \"harga_max\": 250000,\r
+
+    \  \"estimasi_waktu\": \"2 jam\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc3NDY2NTc5LCJpYXQiOjE3Nzc0NTkzNzksImp0aSI6IjE0NTMxNzIwMWQxNjQyODNhYTY4NDU1NmZlMjQwYzkwIiwidXNlcl9pZCI6ImI3ZTUyYzdjLWIxZDYtNGFjYS1hOWI5LTJhMWUzMWZhZTA0YyJ9.0FkcQhyJbBq4CP9gbYkWzDzgNMP3eF3NQHAoZYj3NkI
+order: 4501556379236559

@@ -216,7 +216,7 @@ export default function UmkmForm() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -241,7 +241,7 @@ export default function UmkmForm() {
             <div style={{
               width: 40,
               height: 40,
-              background: '#4f46e5',
+              background: '#3b82f6',
               borderRadius: 10,
               display: 'flex',
               alignItems: 'center',
@@ -299,9 +299,9 @@ export default function UmkmForm() {
             padding: '12px 24px',
             fontSize: 14,
             fontWeight: 600,
-            color: '#4f46e5',
+            color: '#3b82f6',
             cursor: 'pointer',
-            borderBottom: '2px solid #4f46e5',
+            borderBottom: '2px solid #3b82f6',
             marginBottom: -2
           }}>
             Form Pendaftaran
@@ -396,12 +396,11 @@ export default function UmkmForm() {
             }}>
               Kategori
             </label>
-            <input
+            <select
               name="category"
               value={form.category}
               onChange={handleChange}
               required
-              placeholder="Kuliner / Fashion / Jasa"
               style={{
                 width: '100%',
                 padding: '12px 16px',
@@ -410,9 +409,16 @@ export default function UmkmForm() {
                 fontSize: 14,
                 outline: 'none',
                 transition: 'all 0.2s',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                appearance: 'auto',
+                cursor: 'pointer',
+                backgroundColor: '#fff'
               }}
-            />
+            >
+              <option value="">-- Pilih Kategori --</option>
+              <option value="Handphone">Handphone</option>
+              <option value="PC&Laptop">PC & Laptop</option>
+            </select>
           </div>
 
           {/* Deskripsi Singkat */}
@@ -712,7 +718,7 @@ export default function UmkmForm() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 6,
-                    color: '#4f46e5',
+                    color: '#3b82f6',
                     fontSize: 13,
                     fontWeight: 500,
                     textDecoration: 'none',
@@ -733,7 +739,7 @@ export default function UmkmForm() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#4f46e5',
+                  color: '#3b82f6',
                   fontSize: 13,
                   fontWeight: 500,
                   cursor: 'pointer',
@@ -814,7 +820,7 @@ export default function UmkmForm() {
             style={{
               width: '100%',
               padding: '14px',
-              background: submitting ? '#a5b4fc' : '#4f46e5',
+              background: submitting ? '#a5b4fc' : '#3b82f6',
               color: '#fff',
               border: 'none',
               borderRadius: 8,

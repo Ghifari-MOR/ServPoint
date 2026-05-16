@@ -2,6 +2,8 @@ import { useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import api from '../services/api'
+import LogoutConfirmModal from '../components/LogoutConfirmModal'
+import ConfirmActionModal from '../components/ConfirmActionModal'
 import { 
   LayoutDashboard, 
   Store, 
@@ -19,12 +21,15 @@ import {
   Mail,
   Edit,
   Save,
-  Trash2
+  Trash2,
+  CheckCircle as SuccessIcon,
+  AlertCircle as ErrorIcon
 } from 'lucide-react'
 
 export default function Admin() {
   const { user, logout } = useContext(AuthContext)
   const navigate = useNavigate()
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [allItems, setAllItems] = useState([])
@@ -39,6 +44,18 @@ export default function Admin() {
     deskripsi: '',
     telpon: '',
     alamat: ''
+  })
+  
+  // State for confirm modals
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    type: 'warning',
+    title: '',
+    message: '',
+    action: null,
+    actionId: null,
+    confirmText: 'Konfirmasi',
+    cancelText: 'Batal'
   })
 
   const pendingCount = useMemo(() => allItems.filter(i => i.status === 'PENDING').length, [allItems])
@@ -76,80 +93,124 @@ export default function Admin() {
   }
 
   useEffect(() => {
+    console.log('[Admin] Component mounted, user:', user)
     if (user) {
+      console.log('[Admin] Fetching data for user:', user.email)
       refresh()
       refreshUsers()
     }
   }, [user])
 
   const approve = async (id) => {
-    setActionMsg('')
-    try {
-      await api.post(`/umkm/${id}/approve/`)
-      setActionKind('success')
-      setActionMsg('UMKM berhasil disetujui.')
-      await refresh()
-    } catch (e) {
-      console.error('Error approving:', e)
-      setActionKind('error')
-      setActionMsg(e?.response?.data?.detail || 'Gagal menyetujui UMKM')
-    }
+    // Show confirm modal first
+    setConfirmModal({
+      isOpen: true,
+      type: 'warning',
+      title: 'Setujui UMKM?',
+      message: 'Apakah Anda yakin ingin menyetujui UMKM ini? Pemilik akan mendapatkan notifikasi.',
+      action: 'approve',
+      actionId: id,
+      confirmText: 'Setujui',
+      cancelText: 'Batal'
+    })
   }
 
   const reject = async (id) => {
+    // Show confirm modal first
+    setConfirmModal({
+      isOpen: true,
+      type: 'warning',
+      title: 'Tolak UMKM?',
+      message: 'Apakah Anda yakin ingin menolak UMKM ini? Pemilik akan mendapatkan notifikasi.',
+      action: 'reject',
+      actionId: id,
+      confirmText: 'Tolak',
+      cancelText: 'Batal'
+    })
+  }
+
+  const handleConfirmAction = async () => {
+    const { action, actionId } = confirmModal
+    
+    setConfirmModal({ ...confirmModal, isOpen: false })
     setActionMsg('')
+    
     try {
-      await api.post(`/umkm/${id}/reject/`)
-      setActionKind('success')
-      setActionMsg('UMKM ditolak.')
+      if (action === 'approve') {
+        await api.post(`/umkm/${actionId}/approve/`)
+        setActionKind('success')
+        setActionMsg('✅ UMKM berhasil disetujui.')
+      } else if (action === 'reject') {
+        await api.post(`/umkm/${actionId}/reject/`)
+        setActionKind('success')
+        setActionMsg('✅ UMKM ditolak.')
+      } else if (action === 'delete') {
+        await api.delete(`/umkm/${actionId}/`)
+        setActionKind('success')
+        setActionMsg('✅ UMKM berhasil dihapus.')
+      } else if (action === 'deleteUser') {
+        await api.delete(`/users/${actionId}/`)
+        setActionKind('success')
+        setActionMsg('✅ User berhasil dihapus.')
+      }
+      
+      setTimeout(() => setActionMsg(''), 4000)
       await refresh()
+      if (action === 'deleteUser') {
+        await refreshUsers()
+      }
     } catch (e) {
-      console.error('Error rejecting:', e)
+      console.error('Error:', e)
       setActionKind('error')
-      setActionMsg(e?.response?.data?.detail || 'Gagal menolak UMKM')
+      if (action === 'approve') {
+        setActionMsg('❌ ' + (e?.response?.data?.detail || 'Gagal menyetujui UMKM'))
+      } else if (action === 'reject') {
+        setActionMsg('❌ ' + (e?.response?.data?.detail || 'Gagal menolak UMKM'))
+      } else if (action === 'delete') {
+        setActionMsg('❌ ' + (e?.response?.data?.detail || 'Gagal menghapus UMKM'))
+      } else if (action === 'deleteUser') {
+        setActionMsg('❌ ' + (e?.response?.data?.detail || 'Gagal menghapus user'))
+      }
+      setTimeout(() => setActionMsg(''), 4000)
     }
   }
 
+  const handleCancelAction = () => {
+    setConfirmModal({ ...confirmModal, isOpen: false })
+  }
+
   const deleteUmkm = async (id) => {
-    if (!window.confirm('Yakin ingin menghapus UMKM ini? Data akan dihapus permanen.')) return
-    setActionMsg('')
-    try {
-      await api.delete(`/umkm/${id}/`)
-      setActionKind('success')
-      setActionMsg('UMKM berhasil dihapus.')
-      setTimeout(() => setActionMsg(''), 3000)
-      await refresh()
-    } catch (e) {
-      console.error('Error deleting:', e)
-      setActionKind('error')
-      setActionMsg(e?.response?.data?.detail || 'Gagal menghapus UMKM')
-    }
+    setConfirmModal({
+      isOpen: true,
+      type: 'error',
+      title: 'Hapus UMKM?',
+      message: 'Apakah Anda yakin ingin menghapus UMKM ini? Data akan dihapus secara permanen dan tidak dapat dipulihkan.',
+      action: 'delete',
+      actionId: id,
+      confirmText: 'Hapus',
+      cancelText: 'Batal'
+    })
   }
 
   const deleteUser = async (userId, userRole) => {
     // Prevent deleting admin accounts
     if (userRole?.toUpperCase() === 'ADMIN') {
       setActionKind('error')
-      setActionMsg('Tidak bisa menghapus akun Admin!')
+      setActionMsg('❌ Tidak bisa menghapus akun Admin!')
       setTimeout(() => setActionMsg(''), 3000)
       return
     }
 
-    if (!window.confirm('Yakin ingin menghapus user ini? Data akan dihapus permanen.')) return
-    
-    setActionMsg('')
-    try {
-      await api.delete(`/users/${userId}/`)
-      setActionKind('success')
-      setActionMsg('User berhasil dihapus.')
-      setTimeout(() => setActionMsg(''), 3000)
-      await refreshUsers()
-    } catch (e) {
-      console.error('Error deleting user:', e)
-      setActionKind('error')
-      setActionMsg(e?.response?.data?.detail || 'Gagal menghapus user')
-      setTimeout(() => setActionMsg(''), 3000)
-    }
+    setConfirmModal({
+      isOpen: true,
+      type: 'error',
+      title: 'Hapus User?',
+      message: 'Apakah Anda yakin ingin menghapus user ini? Data akan dihapus secara permanen dan tidak dapat dipulihkan.',
+      action: 'deleteUser',
+      actionId: userId,
+      confirmText: 'Hapus',
+      cancelText: 'Batal'
+    })
   }
 
   const openEditModal = (item) => {
@@ -196,10 +257,16 @@ export default function Admin() {
   }
 
   const handleLogout = () => {
-    if (window.confirm('Apakah Anda yakin ingin logout?')) {
-      logout()
-      navigate('/login', { replace: true })
-    }
+    setShowLogoutModal(true)
+  }
+
+  const handleLogoutConfirm = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
+
+  const handleLogoutCancel = () => {
+    setShowLogoutModal(false)
   }
 
   const displayItems = useMemo(() => {
@@ -273,7 +340,7 @@ export default function Admin() {
           <div style={{
             width: 40,
             height: 40,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
             borderRadius: 10,
             display: 'grid',
             placeItems: 'center',
@@ -325,14 +392,6 @@ export default function Admin() {
             active={activeView === 'users'}
             onClick={() => setActiveView('users')}
           />
-          <SidebarLink
-            icon={<FileText size={20} />}
-            label="Reports"
-          />
-          <SidebarLink
-            icon={<Settings size={20} />}
-            label="Settings"
-          />
         </nav>
 
         <div style={{ marginTop: 'auto' }}>
@@ -348,7 +407,7 @@ export default function Admin() {
             <div style={{
               width: 40,
               height: 40,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
               borderRadius: '50%',
               display: 'grid',
               placeItems: 'center',
@@ -479,6 +538,30 @@ export default function Admin() {
           </div>
         </div>
 
+        {loading && allItems.length === 0 && allUsers.length === 0 && (
+          <div style={{
+            padding: 40,
+            textAlign: 'center',
+            background: '#fff',
+            borderRadius: 12,
+            border: '1px solid #e2e8f0'
+          }}>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{
+                width: 40,
+                height: 40,
+                border: '3px solid #e2e8f0',
+                borderTopColor: '#3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite',
+                margin: '0 auto'
+              }} />
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
+            <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>Loading data...</p>
+          </div>
+        )}
+
         {activeView === 'dashboard' && (
           <div style={{ 
             display: 'grid', 
@@ -500,7 +583,7 @@ export default function Admin() {
                 right: -20,
                 width: 100,
                 height: 100,
-                background: 'linear-gradient(135deg, #667eea22 0%, #764ba222 100%)',
+                background: 'linear-gradient(135deg, #3b82f622 0%, #1e40af22 100%)',
                 borderRadius: '50%'
               }} />
               <div style={{ position: 'relative' }}>
@@ -509,7 +592,7 @@ export default function Admin() {
                   <div style={{
                     width: 48,
                     height: 48,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
                     borderRadius: 10,
                     display: 'grid',
                     placeItems: 'center',
@@ -617,16 +700,74 @@ export default function Admin() {
 
         {actionMsg && (
           <div style={{
+            position: 'fixed',
+            top: 20,
+            right: 20,
             padding: 16,
             background: actionKind === 'success' ? '#d1fae5' : '#fee2e2',
-            border: `1px solid ${actionKind === 'success' ? '#34d399' : '#f87171'}`,
+            border: `1px solid ${actionKind === 'success' ? '#6ee7b7' : '#fca5a5'}`,
             borderRadius: 10,
-            marginBottom: 24,
             color: actionKind === 'success' ? '#065f46' : '#991b1b',
             fontSize: 14,
-            fontWeight: 500
+            fontWeight: 500,
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)',
+            zIndex: 8000,
+            maxWidth: 350,
+            animation: 'slideInRight 0.3s ease-out',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12
           }}>
-            {actionMsg}
+            <style>{`
+              @keyframes slideInRight {
+                from {
+                  opacity: 0;
+                  transform: translateX(100px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateX(0);
+                }
+              }
+            `}</style>
+            {actionKind === 'success' ? <SuccessIcon size={20} /> : <ErrorIcon size={20} />}
+            <span>{actionMsg}</span>
+          </div>
+        )}
+
+        {error && (
+          <div style={{
+            padding: 24,
+            background: '#fee2e2',
+            border: '1px solid #f87171',
+            borderRadius: 10,
+            marginBottom: 24,
+            color: '#991b1b',
+            fontSize: 14,
+            fontWeight: 500,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span>⚠️ Error: {error}</span>
+            <button
+              onClick={() => {
+                refresh()
+                refreshUsers()
+              }}
+              style={{
+                padding: '8px 16px',
+                background: '#dc2626',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: 13
+              }}
+            >
+              Retry
+            </button>
           </div>
         )}
 
@@ -780,7 +921,7 @@ export default function Admin() {
                 style={{
                   padding: '12px 24px',
                   border: 'none',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
                   borderRadius: 8,
                   fontSize: 14,
                   fontWeight: 500,
@@ -798,6 +939,23 @@ export default function Admin() {
           </div>
         </div>
       )}
+      
+      <LogoutConfirmModal 
+        isOpen={showLogoutModal}
+        onConfirm={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
+      />
+      
+      <ConfirmActionModal
+        isOpen={confirmModal.isOpen}
+        type={confirmModal.type}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        cancelText={confirmModal.cancelText}
+        onConfirm={handleConfirmAction}
+        onCancel={handleCancelAction}
+      />
     </div>
   )
 }
@@ -877,7 +1035,7 @@ function UmkmTable({ items, loading, error, title, onRefresh, onApprove, onRejec
                     <div style={{
                       width: 40,
                       height: 40,
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
                       borderRadius: 8,
                       display: 'grid',
                       placeItems: 'center',
@@ -1129,19 +1287,32 @@ function UsersTable({ users, loading, error, onRefresh, onDelete }) {
                       <div style={{
                         width: 40,
                         height: 40,
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: u.profile_picture_url ? 'transparent' : 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
                         borderRadius: '50%',
                         display: 'grid',
                         placeItems: 'center',
                         color: '#fff',
                         fontSize: 14,
-                        fontWeight: 600
+                        fontWeight: 600,
+                        overflow: 'hidden'
                       }}>
-                        {(u.name || u.email || 'U').charAt(0).toUpperCase()}
+                        {u.profile_picture_url ? (
+                          <img 
+                            src={u.profile_picture_url} 
+                            alt={u.name || u.email}
+                            style={{ 
+                              width: '100%', 
+                              height: '100%', 
+                              objectFit: 'cover' 
+                            }}
+                          />
+                        ) : (
+                          (u.name || u.email || 'U').charAt(0).toUpperCase()
+                        )}
                       </div>
                       <div>
                         <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#0f172a' }}>
-                          {u.name || '-'}
+                          {u.name && u.name !== '-' ? u.name : u.email}
                         </p>
                       </div>
                     </div>
@@ -1249,14 +1420,14 @@ function SidebarLink({ icon, label, active, badge, badgeColor, onClick }) {
         marginBottom: 4,
         border: 'none',
         background: active ? '#f8fafc' : 'transparent',
-        color: active ? '#667eea' : '#64748b',
+        color: active ? '#3b82f6' : '#64748b',
         borderRadius: 10,
         fontSize: 14,
         fontWeight: 500,
         cursor: 'pointer',
         transition: 'all 0.15s',
         textAlign: 'left',
-        borderLeft: active ? '3px solid #667eea' : '3px solid transparent'
+        borderLeft: active ? '3px solid #3b82f6' : '3px solid transparent'
       }}
       onMouseEnter={(e) => {
         if (!active) {

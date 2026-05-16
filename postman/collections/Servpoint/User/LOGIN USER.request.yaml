@@ -1,0 +1,14 @@
+$kind: http-request
+name: LOGIN USER
+url: http://localhost:8000/api/auth/login/
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"email\": \"testuser2@april2026.com\",\r
+
+    \  \"password\": \"SecurePass1234!\"\r
+
+    }"
+order: 2990835814560368

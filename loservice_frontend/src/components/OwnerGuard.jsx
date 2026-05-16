@@ -24,7 +24,7 @@ export default function OwnerGuard({ children, requireUmkm = false }) {
       try {
         const { data } = await api.get('/umkm/')
         console.log('[OwnerGuard] UMKM API response:', data)
-        const umkmList = Array.isArray(data) ? data : []
+        const umkmList = Array.isArray(data) ? data : data?.results ? data.results : []
         console.log('[OwnerGuard] UMKM count:', umkmList.length)
         if (active) {
           setHasUmkm(umkmList.length > 0)
@@ -33,7 +33,9 @@ export default function OwnerGuard({ children, requireUmkm = false }) {
       } catch (e) {
         console.error('[OwnerGuard] Error fetching UMKM:', e)
         console.error('[OwnerGuard] Error response:', e?.response?.data)
+        console.error('[OwnerGuard] Error status:', e?.response?.status)
         if (active) {
+          // Jika API gagal, asumsikan belum punya UMKM (safer untuk registration flow)
           setHasUmkm(false)
           setChecking(false)
         }
@@ -61,7 +63,7 @@ export default function OwnerGuard({ children, requireUmkm = false }) {
             width: 48, 
             height: 48, 
             border: '3px solid #e2e8f0',
-            borderTopColor: '#4f46e5',
+            borderTopColor: '#3b82f6',
             borderRadius: '50%',
             animation: 'spin 0.8s linear infinite',
             margin: '0 auto 16px'

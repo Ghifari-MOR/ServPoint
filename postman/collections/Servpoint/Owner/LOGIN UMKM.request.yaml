@@ -1,0 +1,14 @@
+$kind: http-request
+name: LOGIN UMKM
+url: http://localhost:8000/api/auth/login/
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"email\": \"owner2@mail.com\",\r
+
+    \  \"password\": \"SecurePass234!\"\r
+
+    }"
+order: 4254610646326752

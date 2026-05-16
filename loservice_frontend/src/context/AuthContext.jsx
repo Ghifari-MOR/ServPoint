@@ -64,11 +64,17 @@ export function AuthProvider({ children }) {
   const register = async (payload) => {
     setError(null)
     try {
-      const res = await api.post('/auth/register/', payload)
+      // Tentukan endpoint berdasarkan role
+      const role = (payload.role || '').toUpperCase()
+      const endpoint = role === 'OWNER' ? '/auth/register-owner/' : '/auth/register/'
+      console.log('[AuthContext] Register to endpoint:', endpoint, 'with role:', role)
+      
+      const res = await api.post(endpoint, payload)
       const { access, refresh, user: userData } = res.data
       localStorage.setItem('token', access)
       localStorage.setItem('refresh', refresh)
       setUser(userData)
+      console.log('[AuthContext] Registration success, user role:', userData.role)
       return res.data
     } catch (e) {
       setError(e?.response?.data?.detail || 'Registrasi gagal')

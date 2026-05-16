@@ -1,8 +1,9 @@
 import { useContext, useEffect, useMemo, useState, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
-import { Reply } from 'lucide-react'
+import { Reply, Settings, LogOut } from 'lucide-react'
 import api from '../services/api'
+import LogoutConfirmModal from '../components/LogoutConfirmModal'
 
 // Dummy data untuk reviews dan gallery (sampai API tersedia)
 const dummyReviews = [
@@ -37,13 +38,16 @@ export default function UmkmDetail() {
   const navigate = useNavigate()
   const { id } = useParams()
 
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+  const isMobile = windowWidth <= 768
+
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [umkm, setUmkm] = useState(null)
   const [activeImage, setActiveImage] = useState(0)
-  
-  // State untuk data real dari backend
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [services, setServices] = useState([])
   const [products, setProducts] = useState([])
   const [servicesLoading, setServicesLoading] = useState(false)
@@ -59,18 +63,34 @@ export default function UmkmDetail() {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' })
   const [reviewError, setReviewError] = useState('')
   const [reviewSuccess, setReviewSuccess] = useState('')
+  // State untuk expand/collapse sections
+  const [expandedServices, setExpandedServices] = useState(false)
+  const [expandedProducts, setExpandedProducts] = useState(false)
+
+  // Handle window resize untuk responsive detection
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const handleLogout = useCallback(() => {
-    if (window.confirm('Apakah Anda yakin ingin logout?')) {
-      const backendLoginUrl = 'http://127.0.0.1:8000/admin/login/'
-      logout()
-      if (user?.role === 'ADMIN') {
-        window.location.replace(backendLoginUrl)
-      } else {
-        navigate('/login')
-      }
+    setShowLogoutModal(true)
+  }, [])
+
+  const handleLogoutConfirm = useCallback(() => {
+    const backendLoginUrl = 'http://127.0.0.1:8000/admin/login/'
+    logout()
+    if (user?.role === 'ADMIN') {
+      window.location.replace(backendLoginUrl)
+    } else {
+      navigate('/login')
     }
   }, [logout, user?.role, navigate])
+
+  const handleLogoutCancel = useCallback(() => {
+    setShowLogoutModal(false)
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -229,9 +249,175 @@ export default function UmkmDetail() {
       {/* Simplified Header */}
       <header className="umkm-header">
         <button className="back-btn" onClick={() => navigate(-1)}>← Kembali</button>
-        <div className="header-user">
-          <span>{user?.name || user?.email}</span>
-          <button className="logout-btn" onClick={handleLogout}>Logout</button>
+        <div style={{ position: 'relative' }}>
+          <div 
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 12, 
+              background: '#fff',
+              padding: '8px 12px',
+              borderRadius: 12,
+              border: '1px solid #e2e8f0',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#3b82f6'
+              e.currentTarget.style.boxShadow = '0 4px 6px rgba(59, 130, 246, 0.1)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#e2e8f0'
+              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
+            }}
+          >
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>
+                {user?.name || 'User'}
+              </p>
+              <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>
+                {user?.email}
+              </p>
+            </div>
+            {user?.profile_picture ? (
+              <img 
+                src={user.profile_picture} 
+                alt={user.name || 'User'}
+                style={{ 
+                  width: 44, 
+                  height: 44, 
+                  borderRadius: '50%', 
+                  objectFit: 'cover',
+                  border: '3px solid #e0e7ff'
+                }}
+              />
+            ) : (
+              <div style={{ 
+                width: 44, 
+                height: 44, 
+                background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)', 
+                borderRadius: '50%', 
+                display: 'grid', 
+                placeItems: 'center', 
+                color: '#3b82f6', 
+                fontWeight: 700,
+                fontSize: 18,
+                border: '3px solid #e0e7ff'
+              }}>
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </div>
+            )}
+          </div>
+
+          {/* Dropdown Menu */}
+          {showUserMenu && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              right: 0,
+              marginTop: 8,
+              background: '#fff',
+              borderRadius: 12,
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+              minWidth: 220,
+              zIndex: 1000,
+              overflow: 'hidden'
+            }}>
+              <div style={{ padding: '16px', borderBottom: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                  {user?.profile_picture ? (
+                    <img
+                      src={user.profile_picture}
+                      alt={user.name || 'User'}
+                      style={{ 
+                        width: 40, 
+                        height: 40, 
+                        borderRadius: '50%', 
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : (
+                    <div style={{ 
+                      width: 40, 
+                      height: 40, 
+                      background: '#3b82f6', 
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff', 
+                      fontWeight: 600,
+                      fontSize: 16
+                    }}>
+                      {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {user?.name || 'User'}
+                    </p>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {user?.email || 'user@email.com'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowUserMenu(false)
+                  navigate('/settings')
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: 'none',
+                  background: 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  color: '#475569',
+                  textAlign: 'left',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <Settings size={16} />
+                Pengaturan
+              </button>
+              <button
+                onClick={() => {
+                  setShowUserMenu(false)
+                  handleLogout()
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: 'none',
+                  background: 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  color: '#ef4444',
+                  textAlign: 'left',
+                  transition: 'all 0.2s',
+                  borderTop: '1px solid #e2e8f0'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <LogOut size={16} />
+                Keluar
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -294,7 +480,13 @@ export default function UmkmDetail() {
               <div className="section-header">
                 <h2>Katalog Jasa</h2>
                 {services.length > 3 && (
-                  <a href="#" className="link-blue">Lihat Semua</a>
+                  <button 
+                    onClick={() => setExpandedServices(!expandedServices)} 
+                    className="link-blue"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'inherit' }}
+                  >
+                    {expandedServices ? 'Lihat Lebih Sedikit' : 'Lihat Semua'}
+                  </button>
                 )}
               </div>
               {servicesLoading ? (
@@ -307,7 +499,7 @@ export default function UmkmDetail() {
                 </div>
               ) : (
                 <div className="service-list">
-                  {services.map((service) => (
+                  {(expandedServices ? services : services.slice(0, 3)).map((service) => (
                     <div key={service.service_id} className="service-item">
                       <div className="service-icon">🛠️</div>
                       <div className="service-info">
@@ -331,11 +523,14 @@ export default function UmkmDetail() {
             <section className="umkm-section">
               <div className="section-header">
                 <h2>Produk Tersedia</h2>
-                {products.length > 3 && (
-                  <div className="header-actions">
-                    <span className="icon-btn">←</span>
-                    <span className="icon-btn">→</span>
-                  </div>
+                {products.length > 4 && (
+                  <button 
+                    onClick={() => setExpandedProducts(!expandedProducts)} 
+                    className="link-blue"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'inherit' }}
+                  >
+                    {expandedProducts ? 'Lihat Lebih Sedikit' : 'Lihat Semua'}
+                  </button>
                 )}
               </div>
               {productsLoading ? (
@@ -348,17 +543,26 @@ export default function UmkmDetail() {
                 </div>
               ) : (
                 <div className="product-grid">
-                  {products.map((product) => (
-                    <div key={product.product_id} className="product-card">
-                      <img 
-                        src={product.image_url || 'https://placehold.co/120x120/1e293b/e2e8f0?text=Product'} 
-                        alt={product.nama_produk} 
-                        loading="lazy" 
-                      />
-                      <h4>{product.nama_produk}</h4>
-                      <p className="product-price">Rp {parseInt(product.harga).toLocaleString()}</p>
-                    </div>
-                  ))}
+                  {(expandedProducts ? products : products.slice(0, 4)).map((product) => {
+                    // Handle multiple possible image URL fields from API
+                    // Priority: image_url_full (full URL) > image (full URL or relative) > image_url (text field)
+                    const imageUrl = product.image_url_full || product.image || product.image_url
+                    return (
+                      <div key={product.product_id} className="product-card">
+                        <img 
+                          src={imageUrl || 'https://placehold.co/120x120/1e293b/e2e8f0?text=Product'} 
+                          alt={product.nama_produk} 
+                          loading="lazy"
+                          style={{ objectFit: 'cover', width: '100%', height: '120px' }}
+                          onError={(e) => {
+                            e.target.src = 'https://placehold.co/120x120/1e293b/e2e8f0?text=Product'
+                          }}
+                        />
+                        <h4>{product.nama_produk}</h4>
+                        <p className="product-price">Rp {parseInt(product.harga).toLocaleString()}</p>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </section>
@@ -385,7 +589,7 @@ export default function UmkmDetail() {
                   marginBottom: '20px',
                   border: '1px solid #e2e8f0'
                 }}>
-                  <h3 style={{ marginBottom: '15px', fontSize: '16px', fontWeight: '600' }}>Tulis Ulasan Anda</h3>
+                  <h3 style={{ marginBottom: '15px', fontSize: '16px', fontWeight: '600', color: '#000000' }}>Tulis Ulasan Anda</h3>
                   
                   {reviewError && (
                     <div style={{ 
@@ -461,6 +665,12 @@ export default function UmkmDetail() {
 
                   <button
                     onClick={async () => {
+                      // Check if user is logged in
+                      if (!user || !user.user_id) {
+                        setReviewError('Anda harus login terlebih dahulu untuk mengirim ulasan')
+                        return
+                      }
+                      
                       if (!reviewForm.comment.trim()) {
                         setReviewError('Mohon tulis ulasan Anda')
                         return
@@ -471,11 +681,16 @@ export default function UmkmDetail() {
                       setReviewSuccess('')
                       
                       try {
-                        await api.post('/umkm-reviews/', {
+                        // Debug: log current user who is submitting review
+                        console.log('[Review Submit] Current authenticated user:', user?.email, 'Role:', user?.role, 'User ID:', user?.user_id)
+                        
+                        const response = await api.post('/umkm-reviews/', {
                           umkm: id,
                           rating: reviewForm.rating,
                           comment: reviewForm.comment
                         })
+                        
+                        console.log('[Review Submit] Review created successfully. User in response:', response.data?.user?.email)
                         
                         setReviewSuccess('Ulasan berhasil dikirim! Terima kasih atas ulasan Anda.')
                         setReviewForm({ rating: 5, comment: '' })
@@ -492,7 +707,9 @@ export default function UmkmDetail() {
                           setReviewSuccess('')
                         }, 2000)
                       } catch (e) {
-                        setReviewError(e?.response?.data?.detail || 'Gagal mengirim ulasan')
+                        const errorMsg = e?.response?.data?.detail || e?.response?.data?.error || 'Gagal mengirim ulasan'
+                        setReviewError(errorMsg)
+                        console.error('[Review Submit] Error:', e?.response?.data || e.message)
                       } finally {
                         setReviewSubmitting(false)
                       }
@@ -529,7 +746,20 @@ export default function UmkmDetail() {
                     {reviews.map((review) => (
                       <div key={review.review_id} className="review-item">
                         <div className="review-avatar">
-                          {(review.user?.name || review.user?.email || 'U').charAt(0).toUpperCase()}
+                          {review.user?.profile_picture_url ? (
+                            <img 
+                              src={review.user.profile_picture_url} 
+                              alt={review.user?.name || review.user?.email}
+                              style={{ 
+                                width: '100%', 
+                                height: '100%', 
+                                borderRadius: '50%', 
+                                objectFit: 'cover' 
+                              }}
+                            />
+                          ) : (
+                            (review.user?.name || review.user?.email || 'U').charAt(0).toUpperCase()
+                          )}
                         </div>
                         <div className="review-content">
                           <div className="review-header">
@@ -556,16 +786,16 @@ export default function UmkmDetail() {
                               marginTop: '12px',
                               padding: '12px',
                               background: '#f8fafc',
-                              borderLeft: '3px solid #4f46e5',
+                              borderLeft: '3px solid #3b82f6',
                               borderRadius: '6px'
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                                <Reply size={14} color="#4f46e5" />
+                                <Reply size={14} color="#3b82f6" />
                                 <p style={{ 
                                   margin: 0, 
                                   fontSize: '12px', 
                                   fontWeight: 600, 
-                                  color: '#4f46e5' 
+                                  color: '#3b82f6' 
                                 }}>
                                   Balasan Owner
                                   {review.reply_at && ` • ${new Date(review.reply_at).toLocaleDateString('id-ID', {
@@ -624,6 +854,76 @@ export default function UmkmDetail() {
                 </div>
               </div>
 
+              {/* Rating Breakdown */}
+              {reviews.length > 0 && (
+                <div style={{
+                  background: '#f8fafc',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  marginBottom: '20px',
+                  border: '1px solid #e2e8f0'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '12px' }}>
+                    {/* Average Rating Display */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '80px' }}>
+                      <div style={{ fontSize: '36px', fontWeight: '700', color: '#0f172a', lineHeight: 1 }}>
+                        {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
+                      </div>
+                      <div style={{ display: 'flex', gap: '2px', marginTop: '4px' }}>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <span
+                            key={i}
+                            style={{
+                              fontSize: '14px',
+                              color: i < Math.round(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) ? '#fbbf24' : '#cbd5e1'
+                            }}
+                          >
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                        {reviews.length} ulasan
+                      </div>
+                    </div>
+
+                    {/* Rating Bars */}
+                    <div style={{ flex: 1 }}>
+                      {[5, 4, 3, 2, 1].map((star) => {
+                        const count = reviews.filter(r => r.rating === star).length
+                        const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0
+                        return (
+                          <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '12px', color: '#64748b', width: '12px', fontWeight: '500' }}>
+                              {star}
+                            </span>
+                            <span style={{ fontSize: '12px', color: '#fbbf24' }}>★</span>
+                            <div style={{ 
+                              flex: 1, 
+                              height: '6px', 
+                              background: '#e2e8f0', 
+                              borderRadius: '3px',
+                              overflow: 'hidden'
+                            }}>
+                              <div style={{
+                                width: `${percentage}%`,
+                                height: '100%',
+                                background: 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)',
+                                borderRadius: '3px',
+                                transition: 'width 0.3s ease'
+                              }} />
+                            </div>
+                            <span style={{ fontSize: '11px', color: '#94a3b8', minWidth: '20px', textAlign: 'right' }}>
+                              {count}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Description */}
               <p className="info-desc">{umkm.deskripsi}</p>
 
@@ -669,7 +969,7 @@ export default function UmkmDetail() {
                           borderRadius: '6px',
                           fontSize: '12px',
                           fontWeight: '600',
-                          color: '#4f46e5',
+                          color: '#3b82f6',
                           textDecoration: 'none',
                           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                           border: '1px solid #e2e8f0',
@@ -722,12 +1022,24 @@ export default function UmkmDetail() {
                     <button 
                       onClick={() => {
                         const [lng, lat] = firstBranch.geom.coordinates
-                        navigate('/user-map', { 
-                          state: { 
-                            showRoute: true, 
-                            coords: { lat, lng } 
-                          } 
-                        })
+                        if (isMobile) {
+                          // Mobile: langsung buka map modal dengan lokasi UMKM
+                          navigate('/user-map', { 
+                            state: { 
+                              openMapModal: true,
+                              mapCenter: { lat, lng },
+                              umkmName: umkm?.nama_umkm
+                            } 
+                          })
+                        } else {
+                          // Desktop: navigate dengan state showRoute untuk popup rute
+                          navigate('/user-map', { 
+                            state: { 
+                              showRoute: true, 
+                              coords: { lat, lng } 
+                            } 
+                          })
+                        }
                       }}
                       className="btn-route"
                       style={{
@@ -756,6 +1068,11 @@ export default function UmkmDetail() {
           </div>
         </div>
       </main>
+      <LogoutConfirmModal 
+        isOpen={showLogoutModal}
+        onConfirm={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
+      />
     </div>
   )
 }

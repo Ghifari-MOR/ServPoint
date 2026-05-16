@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Plus, Trash2, X } from 'lucide-react'
 
 export function GalleryContent({ gallery, onAdd, onDelete, onSetPrimary }) {
@@ -16,7 +17,7 @@ export function GalleryContent({ gallery, onAdd, onDelete, onSetPrimary }) {
             alignItems: 'center',
             gap: 8,
             padding: '12px 24px',
-            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+            background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
             border: 'none',
             borderRadius: 8,
             color: '#fff',
@@ -68,7 +69,7 @@ function GalleryCard({ image, onDelete, onSetPrimary }) {
       background: '#fff',
       borderRadius: 12,
       overflow: 'hidden',
-      border: image.is_primary ? '2px solid #4f46e5' : '1px solid #e2e8f0',
+      border: image.is_primary ? '2px solid #3b82f6' : '1px solid #e2e8f0',
       position: 'relative'
     }}>
       {image.is_primary && (
@@ -76,7 +77,7 @@ function GalleryCard({ image, onDelete, onSetPrimary }) {
           position: 'absolute',
           top: 8,
           left: 8,
-          background: '#4f46e5',
+          background: '#3b82f6',
           color: '#fff',
           padding: '4px 12px',
           borderRadius: 6,
@@ -160,20 +161,100 @@ function GalleryCard({ image, onDelete, onSetPrimary }) {
 }
 
 export function GalleryModal({ onSave, onClose, selectedImage, imagePreview, handleImageChange, uploading }) {
+  const [showConfirmClose, setShowConfirmClose] = useState(false)
+
+  // Check if form has unsaved/selected image
+  const hasChanges = !!selectedImage || !!imagePreview
+
+  // Handle close with confirmation
+  const handleClose = () => {
+    if (hasChanges && !uploading) {
+      setShowConfirmClose(true)
+    } else if (!uploading) {
+      onClose()
+    }
+  }
+
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: 24
-    }} onClick={onClose}>
+    <>
+      {/* Confirmation Dialog */}
+      {showConfirmClose && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 12,
+            padding: 24,
+            maxWidth: 400,
+            textAlign: 'center'
+          }}>
+            <h3 style={{ margin: '0 0 12px 0', color: '#0f172a' }}>Batalkan upload?</h3>
+            <p style={{ margin: '0 0 20px 0', color: '#64748b', fontSize: 14 }}>
+              Foto yang Anda pilih akan tidak disimpan jika tidak diupload.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowConfirmClose(false)}
+                style={{
+                  padding: '10px 20px',
+                  border: '1px solid #e2e8f0',
+                  background: '#fff',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: '#64748b'
+                }}
+              >
+                Lanjutkan Upload
+              </button>
+              <button
+                onClick={() => {
+                  setShowConfirmClose(false)
+                  onClose()
+                }}
+                style={{
+                  padding: '10px 20px',
+                  border: 'none',
+                  background: '#ef4444',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: '#fff'
+                }}
+              >
+                Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Modal */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: 24
+      }} onClick={handleClose}>
       <div style={{
         background: '#fff',
         borderRadius: 16,
@@ -188,7 +269,7 @@ export function GalleryModal({ onSave, onClose, selectedImage, imagePreview, han
             Upload Foto Galeri
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             style={{
               background: 'none',
               border: 'none',
@@ -237,7 +318,7 @@ export function GalleryModal({ onSave, onClose, selectedImage, imagePreview, han
           <div style={{ display: 'flex', gap: 12 }}>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               style={{
                 flex: 1,
                 padding: '12px',
@@ -258,7 +339,7 @@ export function GalleryModal({ onSave, onClose, selectedImage, imagePreview, han
               style={{
                 flex: 1,
                 padding: '12px',
-                background: uploading ? '#94a3b8' : 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                background: uploading ? '#94a3b8' : 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
                 border: 'none',
                 borderRadius: 8,
                 fontSize: 14,
@@ -272,6 +353,7 @@ export function GalleryModal({ onSave, onClose, selectedImage, imagePreview, han
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

@@ -21,11 +21,14 @@ export default function PrivateRoute({ children, allowedRoles, requireStaff = fa
     return <Navigate to="/login" replace state={{ from }} />
   }
 
-  // Cek apakah user punya akses
-  const hasRoleAccess = !allowedRoles || allowedRoles.includes(user?.role)
-  const hasStaffAccess = !requireStaff || user?.is_staff || user?.is_superuser
+  // Cek apakah user punya role access
+  const userRole = user?.role ? String(user.role).toUpperCase() : ''
+  const hasRoleAccess = !allowedRoles || allowedRoles.some(r => String(r).toUpperCase() === userRole)
   
-  if (!hasRoleAccess && !hasStaffAccess) {
+  // Cek apakah user punya staff access
+  const hasStaffAccess = !requireStaff || (user?.is_staff || user?.is_superuser || userRole === 'ADMIN')
+  
+  if (!hasRoleAccess || !hasStaffAccess) {
     return <Navigate to={getHomePath(user?.role)} replace />
   }
 

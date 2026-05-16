@@ -1,0 +1,32 @@
+$kind: http-request
+name: CREATE UMKM
+url: http://localhost:8000/api/umkm/
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"nama_umkm\": \"Servis xyzz2\",\r
+
+    \  \"deskripsi\": \"Tempat servis berkualitas harga terjangkau\",\r
+
+    \  \"telpon\": \"085123456788\",\r
+
+    \  \"email\": \"servis2@example.com\",\r
+
+    \  \"alamat\": \"Jl. Merdeka No. 1234\",\r
+
+    \  \"kota\": \"Jakarta\",\r
+
+    \  \"kategori\": \"Pc&Laptop\",\r
+
+    \  \"latitude\": \"-6.2087\",\r
+
+    \  \"longitude\": \"106.8457\"\r
+
+    }"
+auth:
+  credentials:
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc3NDY2NTc5LCJpYXQiOjE3Nzc0NTkzNzksImp0aSI6IjE0NTMxNzIwMWQxNjQyODNhYTY4NDU1NmZlMjQwYzkwIiwidXNlcl9pZCI6ImI3ZTUyYzdjLWIxZDYtNGFjYS1hOWI5LTJhMWUzMWZhZTA0YyJ9.0FkcQhyJbBq4CP9gbYkWzDzgNMP3eF3NQHAoZYj3NkI
+  type: bearer
+order: 4354397358263022

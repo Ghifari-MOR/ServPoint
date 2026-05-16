@@ -175,7 +175,7 @@ export default function KatalogJasa() {
               alignItems: 'center',
               gap: 8,
               padding: '12px 24px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
               border: 'none',
               borderRadius: 8,
               color: '#fff',
@@ -228,7 +228,7 @@ export default function KatalogJasa() {
                   <div style={{
                     width: 48,
                     height: 48,
-                    background: 'linear-gradient(135deg, #667eea22 0%, #764ba222 100%)',
+                    background: 'linear-gradient(135deg, #3b82f622 0%, #1e40af22 100%)',
                     borderRadius: 10,
                     display: 'grid',
                     placeItems: 'center',
@@ -503,7 +503,7 @@ export default function KatalogJasa() {
                   style={{
                     padding: '12px 24px',
                     border: 'none',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
                     borderRadius: 8,
                     fontSize: 14,
                     fontWeight: 500,

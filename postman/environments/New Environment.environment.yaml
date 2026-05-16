@@ -1,0 +1,9 @@
+name: New Environment
+values:
+  - key: baseUrl
+    value: ''
+  - key: accessToken
+    value: ''
+  - key: refreshToken
+    value: ''
+color: 0
