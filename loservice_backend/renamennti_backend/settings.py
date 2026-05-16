@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 import os
-from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,20 +22,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config(
-    'SECRET_KEY',
-    default='django-insecure-46gjizthps-cw9413@^ia@qjrrt*8*q5bbh_eu2*4jxl7f(mqk)'
-)
+SECRET_KEY = 'django-insecure-46gjizthps-cw9413@^ia@qjrrt*8*q5bbh_eu2*4jxl7f(mqk'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = False  # Set to False for production
 
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    '*.railway.app',
-    'yourdomain.com',
-    'www.yourdomain.com',
+    '103.247.9.207',
+    'servpoint.com',
+    'www.servpoint.com',
 ]
 
 
@@ -71,7 +67,7 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-# CORS settings for frontend (localhost/127.0.0.1)
+# CORS settings for frontend
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://localhost:3001',
@@ -79,9 +75,12 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:3001',
     'http://localhost:5173',
     'http://127.0.0.1:5173',
-    'https://*.railway.app',  # Railway production
-    'https://yourdomain.com',
-    'https://www.yourdomain.com',
+    'http://103.247.9.207',
+    'https://103.247.9.207',
+    'http://servpoint.com',
+    'https://servpoint.com',
+    'http://www.servpoint.com',
+    'https://www.servpoint.com',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -104,9 +103,12 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:3001',
     'http://localhost:5173',
     'http://127.0.0.1:5173',
-    'https://*.railway.app',
-    'https://yourdomain.com',
-    'https://www.yourdomain.com',
+    'http://103.247.9.207',
+    'https://103.247.9.207',
+    'http://servpoint.com',
+    'https://servpoint.com',
+    'http://www.servpoint.com',
+    'https://www.servpoint.com',
 ]
 
 REST_FRAMEWORK = {
@@ -118,7 +120,6 @@ REST_FRAMEWORK = {
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # For serving static files in production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -150,27 +151,12 @@ WSGI_APPLICATION = 'renamennti_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# For Railway: use PostgreSQL from DATABASE_URL environment variable
-DATABASE_URL = os.environ.get('DATABASE_URL')
-
-if DATABASE_URL:
-    # Production: PostgreSQL on Railway
-    import dj_database_url
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    # Development: SQLite
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
 
 # Password validation
@@ -207,9 +193,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_URL = 'static/'
 
 # Media files (Uploaded by users)
 MEDIA_URL = '/media/'
@@ -265,14 +249,13 @@ LOGGING = {
 # Uncomment or modify as needed for your environment
 
 # For HTTPS/SSL in production:
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_SSL_REDIRECT = True
+# SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
+# SECURE_HSTS_SECONDS = 31536000
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
 
 # Update CORS and CSRF origins when deploying with custom domain:
-# Already updated above in CORS_ALLOWED_ORIGINS and CSRF_TRUSTED_ORIGINS
+# CORS_ALLOWED_ORIGINS = ['https://yourdomain.com', 'https://www.yourdomain.com']
+# CSRF_TRUSTED_ORIGINS = ['https://yourdomain.com', 'https://www.yourdomain.com']
