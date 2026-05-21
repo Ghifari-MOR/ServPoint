@@ -1,0 +1,148 @@
+🎯 LoService API - QUICK CHEAT SHEET
+Base URL: https://servpoint.my.id/api
+
+⚠️  CRITICAL: JANGAN LUPA /api/ DI URL!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ SALAH (return HTML frontend):
+   GET https://servpoint.my.id/umkm
+   Response: <!DOCTYPE html> ... <div id="root"></div>
+   
+✅ BENAR (return JSON API):
+   GET https://servpoint.my.id/api/umkm/
+   Response: {"umkm_id": "...", "user": {...}, "role": "OWNER"}
+
+Selalu tambahkan /api/ di URL saat call API! ⚡
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MOST IMPORTANT - UNTUK REGISTER OWNER:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ SALAH:
+   POST https://servpoint.my.id/register
+   
+✅ BENAR:
+   POST https://servpoint.my.id/api/auth/register-owner/
+
+Perbedaan:
+- SALAH: missing "/api/auth" + wrong endpoint
+- BENAR: full path dengan /api/auth/register-owner/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ALL AUTHENTICATION ENDPOINTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Register User:
+  POST /api/auth/register/
+  {email, password, password_confirm, role:"USER"}
+
+Register Owner:
+  POST /api/auth/register-owner/
+  {email, password, password_confirm}  (role otomatis OWNER)
+
+Login:
+  POST /api/auth/login/
+  {email, password}
+
+Get Current User:
+  GET /api/auth/me/
+  Header: Authorization: Bearer {token}
+
+Refresh Token:
+  POST /api/auth/token/refresh/
+  {refresh: "token"}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ALL API ENDPOINTS (by role)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PUBLIC (no auth needed):
+  GET /api/kategori/                    - List categories
+  GET /api/umkm/?status=APPROVED        - List approved UMKM
+
+USER (need auth):
+  POST /api/umkm-reviews/               - Create review
+  GET /api/auth/me/                     - Get current user
+
+OWNER (need auth):
+  POST /api/umkm/                       - Create UMKM
+  POST /api/umkm-services/              - Create service
+  POST /api/umkm-products/              - Create product
+  POST /api/umkm-gallery/               - Upload gallery (form-data!)
+  PATCH /api/umkm/{id}/                 - Update UMKM
+  DELETE /api/umkm/{id}/                - Delete UMKM
+
+ADMIN (need auth):
+  POST /api/kategori/                   - Create category
+  POST /api/umkm/{id}/approve/          - Approve UMKM
+  POST /api/umkm/{id}/reject/           - Reject UMKM
+  GET /api/users/                       - List users
+  DELETE /api/users/{id}/               - Delete user
+
+UTILITY:
+  POST /api/utils/parse-maps/           - Parse Google Maps URL
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+POSTMAN SETUP (1 minute)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Create Environment:
+   - Settings → Manage Environments
+   - Add:
+     base_url = https://servpoint.my.id/api
+     access_token = (from login/register response)
+     refresh_token = (from login/register response)
+
+2. Use in Requests:
+   - URL: {{base_url}}/kategori/
+   - Auth Header: Bearer {{access_token}}
+
+3. Copy-Paste Body:
+   - Select "raw" mode
+   - Select "JSON" format
+   - Paste body from LoService_API_RAW_Examples_FULL_URL.txt
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMMON ERRORS & FIXES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+405 Method Not Allowed:
+  ❌ Endpoint salah atau tidak ada
+  ✅ Cek URL sudah benar: /api/auth/register-owner/ (bukan /register)
+  ✅ Pastikan ada /api/ di URL!
+
+200 OK tapi return HTML (bukan JSON):
+  ❌ URL lupa /api/ → Nginx route ke frontend SPA
+  ✅ Gunakan: https://servpoint.my.id/api/umkm/ (ada /api/)
+  ✅ Bukan: https://servpoint.my.id/umkm
+
+400 Bad Request:
+  ❌ Body JSON syntax error atau field missing
+  ✅ Pastikan Content-Type: application/json
+  ✅ Pastikan semua field required ada
+
+401 Unauthorized:
+  ❌ Token expired atau tidak ada
+  ✅ Copy access_token dari login/register response
+  ✅ Format: Authorization: Bearer {token} (ada spasi setelah Bearer)
+
+413 Payload Too Large:
+  ❌ File terlalu besar
+  ✅ Max size: 10MB per file
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TESTING ORDER (Recommended)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Register User → Copy token
+2. Register Owner → Copy token
+3. Login → Copy token
+4. Test GET /kategori/ (no auth needed)
+5. Test GET /auth/me/ (with auth)
+6. Owner: Create UMKM
+7. Owner: Upload gallery
+8. Admin: Approve UMKM
+9. User: Create review
+10. Test map at https://servpoint.my.id/user-map
+
+Kalau semua berjalan → API ready! 🚀

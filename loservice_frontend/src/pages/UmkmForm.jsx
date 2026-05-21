@@ -53,17 +53,34 @@ export default function UmkmForm() {
       },
       (err) => {
         setGettingLocation(false)
+        let errorMsg = 'Gagal mendapatkan lokasi. Coba lagi.'
+        
         if (err.code === 1) {
-          setError('Akses lokasi ditolak. Silakan izinkan akses lokasi di browser.')
+          // PERMISSION_DENIED
+          errorMsg = `❌ Akses Lokasi Ditolak!
+
+Untuk mengizinkan akses GPS:
+
+📱 Chrome/Edge/Brave:
+1. Klik ikon 🔒 (Lock/Info) di address bar
+2. Cari "Location" atau "Lokasi"
+3. Ubah ke "Allow" atau "Izinkan"
+4. Refresh halaman ini
+
+🧭 Setelah izinkan, klik "Ambil Lokasi Saat Ini" lagi.`
         } else if (err.code === 2) {
-          setError('Lokasi tidak tersedia. Pastikan GPS aktif.')
-        } else {
-          setError('Gagal mendapatkan lokasi. Coba lagi.')
+          errorMsg = '📡 Lokasi Tidak Tersedia\n\nPastikan:\n• GPS/Location Services aktif\n• Tidak dalam mode offline\n• Tunggu beberapa detik lalu coba lagi'
+        } else if (err.code === 3) {
+          errorMsg = '⏱️ Waktu Habis\n\nKoneksi lambat atau GPS timeout. Coba lagi.'
         }
+        
+        setError(errorMsg)
+        // Don't show manual input, just show error with retry
+        setShowManualInput(false)
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
         maximumAge: 0,
       }
     )
@@ -312,12 +329,15 @@ export default function UmkmForm() {
         {error && (
           <div style={{
             background: '#fef2f2',
-            border: '1px solid #fecaca',
-            color: '#dc2626',
-            padding: '12px 16px',
+            border: '2px solid #fecaca',
+            color: '#991b1b',
+            padding: '16px',
             borderRadius: 10,
-            fontSize: 14,
-            marginBottom: 24
+            fontSize: 13,
+            marginBottom: 24,
+            whiteSpace: 'pre-line',
+            lineHeight: 1.6,
+            fontFamily: 'system-ui, -apple-system, sans-serif'
           }}>
             {error}
           </div>
@@ -632,45 +652,83 @@ export default function UmkmForm() {
 
             {/* Get Location Button */}
             {!locationSuccess ? (
-              <button
-                type="button"
-                onClick={getCurrentLocation}
-                disabled={gettingLocation}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: gettingLocation ? '#a5b4fc' : '#10b981',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: gettingLocation ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  marginBottom: 12
-                }}
-              >
-                <MapPin size={18} />
-                {gettingLocation ? 'Mendapatkan lokasi...' : 'Lokasi Berkali Didapat!'}
-              </button>
+              <div style={{ marginBottom: 12 }}>
+                <button
+                  type="button"
+                  onClick={getCurrentLocation}
+                  disabled={gettingLocation}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: gettingLocation ? '#bfdbfe' : '#3b82f6',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: gettingLocation ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => !gettingLocation && (e.target.style.background = '#2563eb')}
+                  onMouseLeave={(e) => !gettingLocation && (e.target.style.background = '#3b82f6')}
+                >
+                  <MapPin size={18} />
+                  {gettingLocation ? 'Mendapatkan lokasi...' : 'Ambil Lokasi Saat Ini (GPS)'}
+                </button>
+                {error && (
+                  <p style={{ fontSize: 12, color: '#64748b', margin: '8px 0 0', fontStyle: 'italic' }}>
+                    💡 Jika tetap gagal, izinkan akses lokasi di browser settings
+                  </p>
+                )}
+              </div>
             ) : (
               <div style={{
-                background: '#d1fae5',
-                border: '1px solid #10b981',
-                borderRadius: 8,
-                padding: '12px 16px',
-                marginBottom: 12,
                 display: 'flex',
+                gap: 12,
                 alignItems: 'center',
-                gap: 8
+                marginBottom: 12
               }}>
-                <Check size={18} style={{ color: '#10b981' }} />
-                <span style={{ fontSize: 14, color: '#065f46', fontWeight: 500 }}>
-                  Lokasi berhasil didapat!
-                </span>
+                <div style={{
+                  background: '#d1fae5',
+                  border: '1px solid #10b981',
+                  borderRadius: 8,
+                  padding: '12px 16px',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8
+                }}>
+                  <Check size={18} style={{ color: '#10b981' }} />
+                  <span style={{ fontSize: 14, color: '#065f46', fontWeight: 500 }}>
+                    Lokasi berhasil didapat!
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocationSuccess(false)
+                    getCurrentLocation()
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#3b82f6',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
+                  onMouseEnter={(e) => (e.target.style.background = '#2563eb')}
+                  onMouseLeave={(e) => (e.target.style.background = '#3b82f6')}
+                >
+                  Ubah
+                </button>
               </div>
             )}
 

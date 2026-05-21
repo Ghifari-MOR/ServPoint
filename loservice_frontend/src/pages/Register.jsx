@@ -7,7 +7,6 @@ export default function Register() {
   const { register, user, loading: authLoading } = useContext(AuthContext)
   const [form, setForm] = useState({
     email: '',
-    username: '',
     password: '',
     password_confirm: '',
     role: 'USER',
@@ -287,57 +286,6 @@ export default function Register() {
                 type="email"
                 required
                 placeholder="nama@email.com"
-                style={{
-                  width: '100%',
-                  padding: isMobile ? '11px 14px 11px 40px' : '12px 16px 12px 44px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: 10,
-                  fontSize: isSmallMobile ? 14 : 15,
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                  boxSizing: 'border-box'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#2563eb'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#e2e8f0'
-                  e.target.style.boxShadow = 'none'
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Username */}
-          <div style={{ marginBottom: isMobile ? 16 : 20 }}>
-            <label style={{
-              display: 'block',
-              fontSize: isSmallMobile ? 13 : 14,
-              fontWeight: 600,
-              color: '#1e293b',
-              marginBottom: 8
-            }}>
-              Username
-            </label>
-            <div style={{ position: 'relative' }}>
-              <User 
-                size={isMobile ? 16 : 18} 
-                style={{ 
-                  position: 'absolute', 
-                  left: isMobile ? 12 : 14, 
-                  top: '50%', 
-                  transform: 'translateY(-50%)',
-                  color: '#94a3b8'
-                }} 
-              />
-              <input
-                name="username"
-                value={form.username}
-                onChange={onChange}
-                type="text"
-                required
-                placeholder="Pilih username unik"
                 style={{
                   width: '100%',
                   padding: isMobile ? '11px 14px 11px 40px' : '12px 16px 12px 44px',

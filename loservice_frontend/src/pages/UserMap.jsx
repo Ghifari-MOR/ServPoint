@@ -83,21 +83,45 @@ export default function UserMap() {
     setShowLogoutModal(false)
   }
 
-  // Get user location
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          })
-        },
-        (error) => {
-          console.log('Geolocation error:', error)
-        }
-      )
+  // Get user location with retry logic
+  const requestUserLocation = (retries = 0) => {
+    if (!navigator.geolocation) {
+      console.warn('[UserMap] Geolocation not supported by browser')
+      return
     }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const newLoc = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        }
+        console.log('[UserMap] Location acquired:', newLoc)
+        setUserLocation(newLoc)
+      },
+      (error) => {
+        console.error('[UserMap] Geolocation error:', {code: error.code, message: error.message})
+        
+        // Retry logic
+        if (retries < 2) {
+          console.log(`[UserMap] Retrying geolocation (${retries + 1}/2)...`)
+          setTimeout(() => requestUserLocation(retries + 1), 3000)
+        } else {
+          console.warn('[UserMap] Geolocation failed after retries')
+          // Don't set a fallback - let user see empty location
+          // They can reload/refresh when they move to better GPS signal
+        }
+      },
+      {
+        enableHighAccuracy: true,  
+        timeout: 20000,            
+        maximumAge: 0              
+      }
+    )
+  }
+
+  useEffect(() => {
+    requestUserLocation()
   }, [])
 
   // Calculate distance using Haversine formula
@@ -126,8 +150,13 @@ export default function UserMap() {
   const showRoute = (umkmLat, umkmLng) => {
     console.log('showRoute called', { umkmLat, umkmLng, userLocation, mapInstance })
     
-    if (!userLocation || !mapInstance) {
-      alert('Lokasi Anda belum terdeteksi. Pastikan GPS aktif dan muat ulang halaman.')
+    if (!userLocation) {
+      alert('📍 GPS masih dideteksi...\n\n✓ Pastikan:\n- GPS/Location Services aktif\n- App punya izin akses lokasi\n- Signal GPS kuat\n\nTunggu 5-10 detik dan coba lagi.')
+      return
+    }
+
+    if (!mapInstance) {
+      alert('Peta belum siap. Tunggu sebentar dan coba lagi.')
       return
     }
 
@@ -170,9 +199,9 @@ export default function UserMap() {
           })
           
           if (i === 0) {
-            marker.bindPopup('Lokasi Anda')
+            marker.bindPopup('📍 Lokasi Anda')
           } else {
-            marker.bindPopup('Tujuan')
+            marker.bindPopup('📌 Tujuan')
           }
           
           return marker

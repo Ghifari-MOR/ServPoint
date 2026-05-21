@@ -39,8 +39,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        # RegisterSerializer = USER ONLY (no role field)
-        attrs["role"] = "USER"  # Force USER role
+        # Allow ADMIN role if explicitly provided, otherwise default to USER
+        if not attrs.get("role") or attrs.get("role").upper() not in ["ADMIN", "OWNER"]:
+            attrs["role"] = "USER"
+        else:
+            attrs["role"] = attrs.get("role").upper()
 
         # alias password_confirm -> password2
         if attrs.get("password_confirm") and not attrs.get("password2"):

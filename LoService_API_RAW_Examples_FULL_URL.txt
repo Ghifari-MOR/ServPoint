@@ -1,0 +1,467 @@
+================================================================================
+LoService API - RAW Examples (FULL HTTPS URLs)
+================================================================================
+Base URL: https://servpoint.my.id/api
+Date: May 21, 2026
+
+PENTING: Gunakan FULL URL (dengan https), BUKAN relative path!
+
+================================================================================
+1. REGISTER USER
+================================================================================
+
+METHOD: POST
+URL: https://servpoint.my.id/api/auth/register/
+HEADERS:
+  Content-Type: application/json
+
+BODY (raw JSON):
+{
+  "email": "user@example.com",
+  "password": "Password123!",
+  "password_confirm": "Password123!",
+  "role": "USER"
+}
+
+RESPONSE (201 Created):
+{
+  "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "user": {
+    "user_id": "ebdc46cb-ac8a-4dde-94a0-090704d85e29",
+    "email": "user@example.com",
+    "username": "user@example.com",
+    "name": "user@example.com",
+    "role": "USER",
+    "profile_picture": null,
+    "profile_picture_url": null,
+    "is_staff": false,
+    "is_superuser": false
+  }
+}
+
+
+================================================================================
+2. REGISTER OWNER (UMKM Owner - ENDPOINT YANG BENAR!)
+================================================================================
+
+METHOD: POST
+URL: https://servpoint.my.id/api/auth/register-owner/
+         ↑ PERHATIAN: /api/auth/register-owner/ bukan /register
+HEADERS:
+  Content-Type: application/json
+
+BODY (raw JSON):
+{
+  "email": "owner@example.com",
+  "password": "Password123!",
+  "password_confirm": "Password123!"
+}
+
+RESPONSE (201 Created):
+{
+  "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "user": {
+    "user_id": "ebdc46cb-ac8a-4dde-94a0-090704d85e29",
+    "email": "owner@example.com",
+    "username": "owner@example.com",
+    "name": "owner@example.com",
+    "role": "OWNER",
+    "profile_picture": null,
+    "profile_picture_url": null,
+    "is_staff": false,
+    "is_superuser": false
+  }
+}
+
+COPY TOKEN: Dari response, copy nilai "access" untuk digunakan di request berikutnya
+
+
+================================================================================
+3. LOGIN (GET TOKEN)
+================================================================================
+
+METHOD: POST
+URL: https://servpoint.my.id/api/auth/login/
+HEADERS:
+  Content-Type: application/json
+
+BODY (raw JSON):
+{
+  "email": "user@example.com",
+  "password": "Password123!"
+}
+
+RESPONSE (200 OK):
+{
+  "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "user": {...}
+}
+
+
+================================================================================
+4. GET CURRENT USER (require authentication)
+================================================================================
+
+METHOD: GET
+URL: https://servpoint.my.id/api/auth/me/
+HEADERS:
+  Authorization: Bearer YOUR_ACCESS_TOKEN_HERE
+  Content-Type: application/json
+
+BODY: (kosong)
+
+RESPONSE (200 OK):
+{
+  "user_id": "ebdc46cb-ac8a-4dde-94a0-090704d85e29",
+  "email": "user@example.com",
+  "username": "user@example.com",
+  "name": "user@example.com",
+  "role": "USER",
+  "profile_picture": null,
+  "profile_picture_url": null,
+  "is_staff": false,
+  "is_superuser": false
+}
+
+
+================================================================================
+5. GET ALL CATEGORIES (PUBLIC - no auth needed)
+================================================================================
+
+METHOD: GET
+URL: https://servpoint.my.id/api/kategori/
+HEADERS:
+  Content-Type: application/json
+
+BODY: (kosong)
+
+RESPONSE (200 OK):
+{
+  "count": 10,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "kategori_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "nama": "Laptop & Komputer",
+      "deskripsi": "Perbaikan dan jual beli laptop",
+      "icon": "icon_url"
+    },
+    {
+      "kategori_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "nama": "Smartphone",
+      "deskripsi": "Perbaikan smartphone",
+      "icon": "icon_url"
+    }
+  ]
+}
+
+
+================================================================================
+6. GET ALL UMKM (PUBLIC - approved only, no auth needed)
+================================================================================
+
+METHOD: GET
+URL: https://servpoint.my.id/api/umkm/?status=APPROVED
+HEADERS:
+  Content-Type: application/json
+
+BODY: (kosong)
+
+RESPONSE (200 OK):
+{
+  "count": 3,
+  "results": [
+    {
+      "umkm_id": "e5f6a7b8-c9d0-1234-ef01-234567890123",
+      "user": "ebdc46cb-ac8a-4dde-94a0-090704d85e29",
+      "nama_umkm": "Service Laptop Jaya",
+      "deskripsi": "Perbaikan dan upgrade laptop",
+      "kategori": {...},
+      "status": "APPROVED",
+      "verified_at": "2026-05-20T10:00:00Z",
+      "branches": [
+        {
+          "branch_id": "uuid",
+          "nama_branch": "Cabang Jakarta",
+          "alamat": "Jl. Merdeka No. 123",
+          "geom": {"type": "Point", "coordinates": [106.8456, -6.2088]},
+          "phone": "021-12345678",
+          "operating_hours": {"Monday": "09:00-18:00"}
+        }
+      ]
+    }
+  ]
+}
+
+
+================================================================================
+7. CREATE UMKM (OWNER only - require auth)
+================================================================================
+
+METHOD: POST
+URL: https://servpoint.my.id/api/umkm/
+HEADERS:
+  Authorization: Bearer YOUR_OWNER_ACCESS_TOKEN_HERE
+  Content-Type: application/json
+
+BODY (raw JSON):
+{
+  "nama_umkm": "Service Laptop Jaya",
+  "deskripsi": "Perbaikan dan upgrade laptop berkualitas tinggi",
+  "kategori": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "branches": [
+    {
+      "nama_branch": "Cabang Jakarta Pusat",
+      "alamat": "Jl. Merdeka No. 123, Jakarta Pusat",
+      "geom": {
+        "type": "Point",
+        "coordinates": [106.8456, -6.2088]
+      },
+      "phone": "021-12345678",
+      "operating_hours": {
+        "Monday": "09:00-18:00",
+        "Tuesday": "09:00-18:00",
+        "Wednesday": "09:00-18:00",
+        "Thursday": "09:00-18:00",
+        "Friday": "09:00-18:00",
+        "Saturday": "10:00-16:00",
+        "Sunday": "Tutup"
+      }
+    }
+  ]
+}
+
+RESPONSE (201 Created):
+{
+  "umkm_id": "e5f6a7b8-c9d0-1234-ef01-234567890123",
+  "status": "PENDING",
+  "branches": [...]
+}
+
+
+================================================================================
+8. UPLOAD GALLERY IMAGE (OWNER only - multipart form-data)
+================================================================================
+
+METHOD: POST
+URL: https://servpoint.my.id/api/umkm-gallery/
+HEADERS:
+  Authorization: Bearer YOUR_OWNER_ACCESS_TOKEN_HERE
+  
+BODY TYPE: form-data (NOT raw JSON!)
+
+Form Fields:
+  - umkm: e5f6a7b8-c9d0-1234-ef01-234567890123 (text)
+  - image: [select file from computer] (file)
+  - is_primary: true (text)
+
+RESPONSE (201 Created):
+{
+  "gallery_id": "uuid",
+  "umkm": "e5f6a7b8-c9d0-1234-ef01-234567890123",
+  "image": "https://servpoint.my.id/media/gallery/...",
+  "is_primary": true,
+  "uploaded_at": "2026-05-21T15:30:00Z"
+}
+
+
+================================================================================
+9. CREATE SERVICE (OWNER only)
+================================================================================
+
+METHOD: POST
+URL: https://servpoint.my.id/api/umkm-services/
+HEADERS:
+  Authorization: Bearer YOUR_OWNER_ACCESS_TOKEN_HERE
+  Content-Type: application/json
+
+BODY (raw JSON):
+{
+  "umkm": "e5f6a7b8-c9d0-1234-ef01-234567890123",
+  "nama_service": "Upgrade RAM",
+  "deskripsi": "Upgrade RAM dari 8GB menjadi 16GB",
+  "harga": 500000
+}
+
+RESPONSE (201 Created):
+{
+  "service_id": "uuid",
+  "umkm": "e5f6a7b8-c9d0-1234-ef01-234567890123",
+  "nama_service": "Upgrade RAM",
+  "deskripsi": "Upgrade RAM dari 8GB menjadi 16GB",
+  "harga": 500000,
+  "created_at": "2026-05-21T15:30:00Z"
+}
+
+
+================================================================================
+10. CREATE REVIEW (USER only)
+================================================================================
+
+METHOD: POST
+URL: https://servpoint.my.id/api/umkm-reviews/
+HEADERS:
+  Authorization: Bearer YOUR_USER_ACCESS_TOKEN_HERE
+  Content-Type: application/json
+
+BODY (raw JSON):
+{
+  "umkm": "e5f6a7b8-c9d0-1234-ef01-234567890123",
+  "rating": 5,
+  "komentar": "Pelayanan sangat baik dan cepat! Rekomendasi!"
+}
+
+RESPONSE (201 Created):
+{
+  "review_id": "uuid",
+  "umkm": "e5f6a7b8-c9d0-1234-ef01-234567890123",
+  "rating": 5,
+  "komentar": "Pelayanan sangat baik dan cepat! Rekomendasi!",
+  "created_at": "2026-05-21T15:30:00Z"
+}
+
+
+================================================================================
+11. PARSE GOOGLE MAPS URL
+================================================================================
+
+METHOD: POST
+URL: https://servpoint.my.id/api/utils/parse-maps/
+HEADERS:
+  Content-Type: application/json
+
+BODY (raw JSON):
+{
+  "maps_url": "https://www.google.com/maps/place/Jakarta/@-6.2088,106.8456,15z"
+}
+
+RESPONSE (200 OK):
+{
+  "latitude": -6.2088,
+  "longitude": 106.8456,
+  "nama_branch": "Jakarta"
+}
+
+
+================================================================================
+12. APPROVE UMKM (ADMIN only)
+================================================================================
+
+METHOD: POST
+URL: https://servpoint.my.id/api/umkm/{umkm_id}/approve/
+         Ganti {umkm_id} dengan ID sebenarnya
+
+HEADERS:
+  Authorization: Bearer YOUR_ADMIN_ACCESS_TOKEN_HERE
+  Content-Type: application/json
+
+BODY: {} (empty)
+
+RESPONSE (200 OK):
+{
+  "detail": "UMKM telah diverifikasi"
+}
+
+
+================================================================================
+13. REJECT UMKM (ADMIN only)
+================================================================================
+
+METHOD: POST
+URL: https://servpoint.my.id/api/umkm/{umkm_id}/reject/
+         Ganti {umkm_id} dengan ID sebenarnya
+
+HEADERS:
+  Authorization: Bearer YOUR_ADMIN_ACCESS_TOKEN_HERE
+  Content-Type: application/json
+
+BODY (raw JSON):
+{
+  "alasan": "Informasi tidak lengkap, silakan lengkapi deskripsi UMKM"
+}
+
+RESPONSE (200 OK):
+{
+  "detail": "UMKM ditolak"
+}
+
+
+================================================================================
+TESTING WORKFLOW
+================================================================================
+
+STEP 1: Register sebagai User
+- POST https://servpoint.my.id/api/auth/register/
+- Copy access_token dari response
+
+STEP 2: Register sebagai Owner (JANGAN LUPA endpoint yang benar!)
+- POST https://servpoint.my.id/api/auth/register-owner/
+- Copy access_token dari response
+
+STEP 3: Login dengan salah satu akun
+- POST https://servpoint.my.id/api/auth/login/
+- Copy access_token dari response
+
+STEP 4: Cek info user saat ini
+- GET https://servpoint.my.id/api/auth/me/
+- Use access_token dari step 3
+
+STEP 5: List categories (PUBLIC - no token needed)
+- GET https://servpoint.my.id/api/kategori/
+
+STEP 6: Owner membuat UMKM
+- POST https://servpoint.my.id/api/umkm/
+- Use access_token dari owner registration
+
+STEP 7: Upload gallery
+- POST https://servpoint.my.id/api/umkm-gallery/
+- Use form-data (bukan raw JSON!)
+- Use access_token dari owner
+
+STEP 8: Admin approve UMKM
+- POST https://servpoint.my.id/api/umkm/{umkm_id}/approve/
+- Use access_token dari admin
+
+STEP 9: User membuat review
+- POST https://servpoint.my.id/api/umkm-reviews/
+- Use access_token dari user
+
+
+================================================================================
+POSTMAN TIPS
+================================================================================
+
+1. Setting Environment Variable di Postman:
+   - Klik gear icon (Settings) → Manage Environments
+   - Add variable: base_url = https://servpoint.my.id/api
+   - Add variable: access_token = (paste token dari login/register)
+   
+   Setelah itu bisa gunakan:
+   - {{base_url}}/auth/register/
+   - {{access_token}} di Authorization header
+
+2. Copy-Paste ke Postman:
+   1. Copy body dari file ini
+   2. Di Postman → Body tab → Pilih "raw"
+   3. Pilih "JSON" dari dropdown
+   4. Paste body
+   5. Ganti placeholder dengan nilai sebenarnya
+   6. Klik SEND
+
+3. Auth Header Format:
+   Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+                  ↑ Ada spasi setelah "Bearer"
+
+4. File Upload (Gallery):
+   - JANGAN gunakan raw JSON!
+   - Gunakan form-data
+   - Pilih "file" dari dropdown untuk field image
+   - Pilih file dari computer
+
+================================================================================
+Semoga membantu! Jika ada yang tidak jelas, tanya lagi! 😊
+================================================================================

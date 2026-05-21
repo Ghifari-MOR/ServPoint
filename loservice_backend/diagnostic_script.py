@@ -1,13 +1,4 @@
 #!/usr/bin/env python
-"""
-Quick diagnostic script to check user and review data integrity.
-Run this in Django shell to identify issues.
-
-Usage in Django shell:
-    python manage.py shell
-    exec(open('diagnostic_script.py').read())
-"""
-
 from account.models import User, UMKMReview, UMKM
 from django.db.models import Count
 

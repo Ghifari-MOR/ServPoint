@@ -10,9 +10,9 @@ django.setup()
 User = get_user_model()
 
 # Create admin user
-email = 'admin@lokator.com'
+email = 'admin@servpoint.local'
 username = 'admin'
-password = 'Admin@123456'
+password = 'Admin@12345'
 name = 'Administrator'
 
 # Check if admin exists

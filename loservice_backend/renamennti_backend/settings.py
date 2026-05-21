@@ -31,8 +31,8 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '103.247.9.207',
-    'servpoint.com',
-    'www.servpoint.com',
+    'servpoint.my.id',
+    'www.servpoint.my.id',
 ]
 
 
@@ -77,10 +77,10 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5173',
     'http://103.247.9.207',
     'https://103.247.9.207',
-    'http://servpoint.com',
-    'https://servpoint.com',
-    'http://www.servpoint.com',
-    'https://www.servpoint.com',
+    'http://servpoint.my.id',
+    'https://servpoint.my.id',
+    'http://www.servpoint.my.id',
+    'https://www.servpoint.my.id',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -105,10 +105,10 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:5173',
     'http://103.247.9.207',
     'https://103.247.9.207',
-    'http://servpoint.com',
-    'https://servpoint.com',
-    'http://www.servpoint.com',
-    'https://www.servpoint.com',
+    'http://servpoint.my.id',
+    'https://servpoint.my.id',
+    'http://www.servpoint.my.id',
+    'https://www.servpoint.my.id',
 ]
 
 REST_FRAMEWORK = {
