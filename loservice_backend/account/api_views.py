@@ -361,6 +361,48 @@ class UMKMReviewViewSet(viewsets.ModelViewSet):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+
+    def _is_admin(self, user):
+        return bool(getattr(user, 'is_staff', False) or getattr(user, 'is_superuser', False) or str(getattr(user, 'role', '')).upper() == 'ADMIN')
+
+    def _can_edit_review(self, review, user):
+        return review.user_id == getattr(user, 'user_id', None) or self._is_admin(user)
+
+    def _can_delete_review(self, review, user):
+        if self._is_admin(user):
+            return True
+
+        if review.user_id == getattr(user, 'user_id', None):
+            return True
+
+        return review.umkm.user_id == getattr(user, 'user_id', None)
+
+    def update(self, request, *args, **kwargs):
+        review = self.get_object()
+        if not self._can_edit_review(review, request.user):
+            return Response(
+                {'error': 'Anda hanya bisa mengedit ulasan milik Anda sendiri'},
+                status=403,
+            )
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        review = self.get_object()
+        if not self._can_edit_review(review, request.user):
+            return Response(
+                {'error': 'Anda hanya bisa mengedit ulasan milik Anda sendiri'},
+                status=403,
+            )
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        review = self.get_object()
+        if not self._can_delete_review(review, request.user):
+            return Response(
+                {'error': 'Anda tidak memiliki izin untuk menghapus ulasan ini'},
+                status=403,
+            )
+        return super().destroy(request, *args, **kwargs)
     
     def perform_create(self, serializer):
         # Explicitly verify authenticated user and log the action

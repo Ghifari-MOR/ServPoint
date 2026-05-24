@@ -202,6 +202,33 @@ class UMKMProductSerializer(serializers.ModelSerializer):
         model = UMKMProduct
         fields = ['product_id', 'umkm', 'nama_produk', 'harga', 'image', 'image_url', 'image_url_full', 'created_at']
         read_only_fields = ['product_id', 'created_at', 'image_url']
+
+    def to_internal_value(self, data):
+        """Accept common Postman aliases and normalize price input."""
+        if hasattr(data, "copy"):
+            mutable_data = data.copy()
+        else:
+            mutable_data = dict(data)
+
+        aliases = {
+            'nama_product': 'nama_produk',
+            'nama_prodck': 'nama_produk',
+            'nama_produk': 'nama_produk',
+            'harga_produk': 'harga',
+            'price': 'harga',
+        }
+
+        for source_key, target_key in aliases.items():
+            if source_key in mutable_data and target_key not in mutable_data:
+                mutable_data[target_key] = mutable_data[source_key]
+
+        harga_value = mutable_data.get('harga')
+        if isinstance(harga_value, str):
+            normalized = harga_value.strip().replace(',', '.')
+            if normalized:
+                mutable_data['harga'] = normalized
+
+        return super().to_internal_value(mutable_data)
     
     def get_image_url_full(self, obj):
         """Return full URL for uploaded image if exists"""

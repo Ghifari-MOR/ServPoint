@@ -63,6 +63,7 @@ export default function UmkmDetail() {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' })
   const [reviewError, setReviewError] = useState('')
   const [reviewSuccess, setReviewSuccess] = useState('')
+  const [editingReviewId, setEditingReviewId] = useState(null)
   // State untuk expand/collapse sections
   const [expandedServices, setExpandedServices] = useState(false)
   const [expandedProducts, setExpandedProducts] = useState(false)
@@ -215,6 +216,122 @@ export default function UmkmDetail() {
   }, [umkm?.umkm_id])
 
   const title = useMemo(() => umkm?.nama_umkm || 'Detail UMKM', [umkm])
+
+  const normalizeReviewId = useCallback((review) => review?.review_id || review?.id, [])
+
+  const isAdminUser = useMemo(() => {
+    const role = String(user?.role || '').toUpperCase()
+    return Boolean(user?.is_staff || user?.is_superuser || role === 'ADMIN')
+  }, [user])
+
+  const canEditReview = useCallback((review) => {
+    if (!user?.user_id || !review) return false
+    return review?.user?.user_id === user.user_id || isAdminUser
+  }, [user?.user_id, isAdminUser])
+
+  const canDeleteReview = useCallback((review) => {
+    if (!user?.user_id || !review) return false
+    if (isAdminUser) return true
+    if (review?.user?.user_id === user.user_id) return true
+    return umkm?.user?.user_id === user.user_id
+  }, [user?.user_id, isAdminUser, umkm?.user?.user_id])
+
+  const refreshReviews = useCallback(async () => {
+    const { data: reviewsData } = await api.get('/umkm-reviews/', {
+      params: { umkm_id: id }
+    })
+    setReviews(Array.isArray(reviewsData) ? reviewsData : [])
+  }, [id])
+
+  const openReviewEditor = useCallback((review) => {
+    const reviewId = normalizeReviewId(review)
+    if (!reviewId) return
+
+    setEditingReviewId(reviewId)
+    setReviewForm({
+      rating: review?.rating ?? 5,
+      comment: review?.comment ?? ''
+    })
+    setReviewError('')
+    setReviewSuccess('')
+    setShowReviewForm(true)
+  }, [normalizeReviewId])
+
+  const cancelReviewEditor = useCallback(() => {
+    setEditingReviewId(null)
+    setReviewForm({ rating: 5, comment: '' })
+    setReviewError('')
+    setReviewSuccess('')
+    setShowReviewForm(false)
+  }, [])
+
+  const handleSaveReview = useCallback(async () => {
+    if (!user || !user.user_id) {
+      setReviewError('Anda harus login terlebih dahulu untuk mengirim ulasan')
+      return
+    }
+
+    if (!reviewForm.comment.trim()) {
+      setReviewError('Mohon tulis ulasan Anda')
+      return
+    }
+
+    setReviewSubmitting(true)
+    setReviewError('')
+    setReviewSuccess('')
+
+    try {
+      if (editingReviewId) {
+        await api.patch(`/umkm-reviews/${editingReviewId}/`, {
+          rating: reviewForm.rating,
+          comment: reviewForm.comment
+        })
+        setReviewSuccess('Ulasan berhasil diperbarui.')
+      } else {
+        await api.post('/umkm-reviews/', {
+          umkm: id,
+          rating: reviewForm.rating,
+          comment: reviewForm.comment
+        })
+        setReviewSuccess('Ulasan berhasil dikirim! Terima kasih atas ulasan Anda.')
+      }
+
+      setReviewForm({ rating: 5, comment: '' })
+      setEditingReviewId(null)
+      await refreshReviews()
+
+      setTimeout(() => {
+        setShowReviewForm(false)
+        setReviewSuccess('')
+      }, 2000)
+    } catch (e) {
+      const errorMsg = e?.response?.data?.detail || e?.response?.data?.error || 'Gagal menyimpan ulasan'
+      setReviewError(errorMsg)
+      console.error('[Review Save] Error:', e?.response?.data || e.message)
+    } finally {
+      setReviewSubmitting(false)
+    }
+  }, [editingReviewId, id, refreshReviews, reviewForm.comment, reviewForm.rating, user])
+
+  const handleDeleteReview = useCallback(async (review) => {
+    const reviewId = normalizeReviewId(review)
+    if (!reviewId) return
+
+    const confirmed = window.confirm('Yakin ingin menghapus ulasan ini?')
+    if (!confirmed) return
+
+    try {
+      await api.delete(`/umkm-reviews/${reviewId}/`)
+      if (editingReviewId === reviewId) {
+        cancelReviewEditor()
+      }
+      await refreshReviews()
+    } catch (e) {
+      const errorMsg = e?.response?.data?.error || e?.response?.data?.detail || 'Gagal menghapus ulasan'
+      alert(errorMsg)
+      console.error('[Review Delete] Error:', e?.response?.data || e.message)
+    }
+  }, [cancelReviewEditor, editingReviewId, normalizeReviewId, refreshReviews])
 
   const verifiedStatus = useMemo(() => {
     const s = String(umkm?.status || '').toUpperCase()
@@ -630,7 +747,13 @@ export default function UmkmDetail() {
               <div className="section-header">
                 <h2>Ulasan Terbaru <span className="count">({reviews.length})</span></h2>
                 <button 
-                  onClick={() => setShowReviewForm(!showReviewForm)} 
+                  onClick={() => {
+                    if (showReviewForm) {
+                      cancelReviewEditor()
+                    } else {
+                      setShowReviewForm(true)
+                    }
+                  }} 
                   className="link-blue"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'inherit' }}
                 >
@@ -647,7 +770,9 @@ export default function UmkmDetail() {
                   marginBottom: '20px',
                   border: '1px solid #e2e8f0'
                 }}>
-                  <h3 style={{ marginBottom: '15px', fontSize: '16px', fontWeight: '600', color: '#000000' }}>Tulis Ulasan Anda</h3>
+                  <h3 style={{ marginBottom: '15px', fontSize: '16px', fontWeight: '600', color: '#000000' }}>
+                    {editingReviewId ? 'Edit Ulasan Anda' : 'Tulis Ulasan Anda'}
+                  </h3>
                   
                   {reviewError && (
                     <div style={{ 
@@ -722,56 +847,7 @@ export default function UmkmDetail() {
                   </div>
 
                   <button
-                    onClick={async () => {
-                      // Check if user is logged in
-                      if (!user || !user.user_id) {
-                        setReviewError('Anda harus login terlebih dahulu untuk mengirim ulasan')
-                        return
-                      }
-                      
-                      if (!reviewForm.comment.trim()) {
-                        setReviewError('Mohon tulis ulasan Anda')
-                        return
-                      }
-                      
-                      setReviewSubmitting(true)
-                      setReviewError('')
-                      setReviewSuccess('')
-                      
-                      try {
-                        // Debug: log current user who is submitting review
-                        console.log('[Review Submit] Current authenticated user:', user?.email, 'Role:', user?.role, 'User ID:', user?.user_id)
-                        
-                        const response = await api.post('/umkm-reviews/', {
-                          umkm: id,
-                          rating: reviewForm.rating,
-                          comment: reviewForm.comment
-                        })
-                        
-                        console.log('[Review Submit] Review created successfully. User in response:', response.data?.user?.email)
-                        
-                        setReviewSuccess('Ulasan berhasil dikirim! Terima kasih atas ulasan Anda.')
-                        setReviewForm({ rating: 5, comment: '' })
-                        
-                        // Refresh reviews
-                        const { data: reviewsData } = await api.get('/umkm-reviews/', {
-                          params: { umkm_id: id }
-                        })
-                        setReviews(Array.isArray(reviewsData) ? reviewsData : [])
-                        
-                        // Hide form after 2 seconds
-                        setTimeout(() => {
-                          setShowReviewForm(false)
-                          setReviewSuccess('')
-                        }, 2000)
-                      } catch (e) {
-                        const errorMsg = e?.response?.data?.detail || e?.response?.data?.error || 'Gagal mengirim ulasan'
-                        setReviewError(errorMsg)
-                        console.error('[Review Submit] Error:', e?.response?.data || e.message)
-                      } finally {
-                        setReviewSubmitting(false)
-                      }
-                    }}
+                    onClick={handleSaveReview}
                     disabled={reviewSubmitting}
                     style={{
                       background: reviewSubmitting ? '#94a3b8' : '#3b82f6',
@@ -784,7 +860,7 @@ export default function UmkmDetail() {
                       fontWeight: '500'
                     }}
                   >
-                    {reviewSubmitting ? 'Mengirim...' : 'Kirim Ulasan'}
+                    {reviewSubmitting ? 'Menyimpan...' : (editingReviewId ? 'Perbarui Ulasan' : 'Kirim Ulasan')}
                   </button>
                 </div>
               )}
@@ -837,6 +913,47 @@ export default function UmkmDetail() {
                             {renderStars(review.rating)}
                           </div>
                           <p className="review-text">"{review.comment}"</p>
+
+                          {(canEditReview(review) || canDeleteReview(review)) && (
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                              {canEditReview(review) && (
+                                <button
+                                  type="button"
+                                  onClick={() => openReviewEditor(review)}
+                                  style={{
+                                    padding: '6px 12px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #dbeafe',
+                                    background: '#eff6ff',
+                                    color: '#2563eb',
+                                    cursor: 'pointer',
+                                    fontSize: '13px',
+                                    fontWeight: 500
+                                  }}
+                                >
+                                  Edit Ulasan
+                                </button>
+                              )}
+                              {canDeleteReview(review) && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteReview(review)}
+                                  style={{
+                                    padding: '6px 12px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #fee2e2',
+                                    background: '#fef2f2',
+                                    color: '#dc2626',
+                                    cursor: 'pointer',
+                                    fontSize: '13px',
+                                    fontWeight: 500
+                                  }}
+                                >
+                                  Hapus Ulasan
+                                </button>
+                              )}
+                            </div>
+                          )}
                           
                           {/* Owner Reply */}
                           {review.reply && (
