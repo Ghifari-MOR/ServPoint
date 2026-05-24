@@ -34,7 +34,7 @@ export default function Dashboard() {
   }
 
   const handleLogoutConfirm = () => {
-    const backendLoginUrl = 'http://127.0.0.1:8000/admin/login/'
+    const backendLoginUrl = `${window.location.origin}/admin/login/`
     logout()
     if (user?.role === 'ADMIN') {
       window.location.replace(backendLoginUrl)

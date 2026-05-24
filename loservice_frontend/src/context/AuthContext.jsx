@@ -28,7 +28,7 @@ export function AuthProvider({ children }) {
         console.error('Auth check failed:', e.message)
         // Check if it's a network error vs auth error
         if (e.code === 'ERR_NETWORK' || !e.response) {
-          console.error('Backend server tidak dapat diakses. Pastikan server berjalan di http://127.0.0.1:8000')
+          console.error('Backend server tidak dapat diakses. Pastikan server production berjalan dan VITE_API_URL sudah benar.')
         }
         // token invalid/expired -> clear
         localStorage.removeItem('token')

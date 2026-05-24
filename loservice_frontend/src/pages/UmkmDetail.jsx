@@ -67,6 +67,16 @@ export default function UmkmDetail() {
   const [expandedServices, setExpandedServices] = useState(false)
   const [expandedProducts, setExpandedProducts] = useState(false)
 
+  const getVisitorKey = () => {
+    const storageKey = 'servpoint_visitor_key'
+    let visitorKey = localStorage.getItem(storageKey)
+    if (!visitorKey) {
+      visitorKey = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`
+      localStorage.setItem(storageKey, visitorKey)
+    }
+    return visitorKey
+  }
+
   // Handle window resize untuk responsive detection
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth)
@@ -79,7 +89,7 @@ export default function UmkmDetail() {
   }, [])
 
   const handleLogoutConfirm = useCallback(() => {
-    const backendLoginUrl = 'http://127.0.0.1:8000/admin/login/'
+    const backendLoginUrl = `${window.location.origin}/admin/login/`
     logout()
     if (user?.role === 'ADMIN') {
       window.location.replace(backendLoginUrl)
@@ -180,6 +190,30 @@ export default function UmkmDetail() {
     }
   }, [id])
 
+  useEffect(() => {
+    if (!umkm?.umkm_id) return
+
+    const trackView = async () => {
+      try {
+        const { data } = await api.post(`/umkm/${umkm.umkm_id}/track-view/`, {
+          visitor_key: getVisitorKey()
+        })
+        if (data) {
+          setUmkm((current) => current ? {
+            ...current,
+            total_views: data.total_views ?? current.total_views,
+            unique_visitors: data.unique_visitors ?? current.unique_visitors
+          } : current)
+          localStorage.setItem('servpoint_analytics_ping', String(Date.now()))
+        }
+      } catch (e) {
+        console.error('[UMKM Detail] Track view failed:', e?.response?.data || e.message)
+      }
+    }
+
+    trackView()
+  }, [umkm?.umkm_id])
+
   const title = useMemo(() => umkm?.nama_umkm || 'Detail UMKM', [umkm])
 
   const verifiedStatus = useMemo(() => {
@@ -223,6 +257,30 @@ export default function UmkmDetail() {
     }
     return ''
   }, [umkm])
+
+  const handleWhatsAppClick = async () => {
+    if (!whatsappUrl) return
+
+    const openedWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+
+    api.post(`/umkm/${umkm.umkm_id}/track-whatsapp/`, {
+      visitor_key: getVisitorKey()
+    }).then(({ data }) => {
+      if (data) {
+        setUmkm((current) => current ? {
+          ...current,
+          whatsapp_clicks: data.whatsapp_clicks ?? current.whatsapp_clicks
+        } : current)
+        localStorage.setItem('servpoint_analytics_ping', String(Date.now()))
+      }
+    }).catch((e) => {
+      console.error('[UMKM Detail] Track WhatsApp failed:', e?.response?.data || e.message)
+    })
+
+    if (!openedWindow) {
+      window.location.href = whatsappUrl
+    }
+  }
 
   if (loading) {
     return (
@@ -1014,9 +1072,9 @@ export default function UmkmDetail() {
                 {/* Action Buttons */}
                 <div className="action-buttons">
                   {whatsappUrl && (
-                    <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn-whatsapp">
+                    <button onClick={handleWhatsAppClick} className="btn-whatsapp" type="button">
                       💬 Chat WhatsApp
-                    </a>
+                    </button>
                   )}
                   {firstBranch?.geom?.coordinates && (
                     <button 
