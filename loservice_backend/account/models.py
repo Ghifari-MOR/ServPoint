@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from django.utils import timezone
 
 
 # ==========================
@@ -70,6 +71,9 @@ class UMKM(models.Model):
     nama_umkm = models.TextField()
     deskripsi = models.CharField(max_length=255)
     telpon = models.TextField()
+    total_views = models.PositiveIntegerField(default=0)
+    unique_visitors = models.PositiveIntegerField(default=0)
+    whatsapp_clicks = models.PositiveIntegerField(default=0)
 
     STATUS_CHOICES = (
         ("PENDING", "Pending"),
@@ -91,6 +95,25 @@ class UMKM(models.Model):
 
     def __str__(self):
         return self.nama_umkm
+
+
+class UMKMVisit(models.Model):
+    visit_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    umkm = models.ForeignKey(UMKM, on_delete=models.CASCADE, related_name="visit_logs")
+    visitor_key = models.CharField(max_length=64)
+    visit_date = models.DateField(default=timezone.localdate)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["umkm", "visitor_key", "visit_date"], name="unique_umkm_visitor_per_day"),
+        ]
+        indexes = [
+            models.Index(fields=["umkm", "visit_date"]),
+        ]
+
+    def __str__(self):
+        return f"Visit {self.umkm_id} {self.visitor_key} {self.visit_date}"
 
 
 # ==========================
