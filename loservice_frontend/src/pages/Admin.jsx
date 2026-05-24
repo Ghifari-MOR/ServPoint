@@ -60,6 +60,7 @@ export default function Admin() {
 
   const pendingCount = useMemo(() => allItems.filter(i => i.status === 'PENDING').length, [allItems])
   const approvedCount = useMemo(() => allItems.filter(i => i.status === 'APPROVED').length, [allItems])
+  const rejectedCount = useMemo(() => allItems.filter(i => i.status === 'REJECTED').length, [allItems])
   const totalUsers = allUsers.length
 
   const refresh = async () => {
@@ -276,6 +277,8 @@ export default function Admin() {
       filtered = allItems.filter(i => i.status === 'PENDING')
     } else if (activeView === 'verified') {
       filtered = allItems.filter(i => i.status === 'APPROVED')
+    } else if (activeView === 'rejected') {
+      filtered = allItems.filter(i => i.status === 'REJECTED')
     }
     
     if (searchQuery && activeView !== 'users') {
@@ -306,6 +309,7 @@ export default function Admin() {
     switch(activeView) {
       case 'pending': return 'UMKM Menunggu Verifikasi'
       case 'verified': return 'UMKM Terverifikasi'
+      case 'rejected': return 'UMKM Ditolak'
       case 'users': return 'Daftar Users'
       default: return 'Semua UMKM'
     }
@@ -384,6 +388,14 @@ export default function Admin() {
             badgeColor="#10b981"
             active={activeView === 'verified'}
             onClick={() => setActiveView('verified')}
+          />
+          <SidebarLink
+            icon={<AlertCircle size={20} />}
+            label="Rejected"
+            badge={rejectedCount}
+            badgeColor="#ef4444"
+            active={activeView === 'rejected'}
+            onClick={() => setActiveView('rejected')}
           />
           <SidebarLink
             icon={<Users size={20} />}
@@ -1008,6 +1020,7 @@ function UmkmTable({ items, loading, error, title, onRefresh, onApprove, onRejec
         <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
           {activeView === 'pending' ? 'Tidak ada UMKM yang menunggu verifikasi' : 
            activeView === 'verified' ? 'Belum ada UMKM terverifikasi' : 
+           activeView === 'rejected' ? 'Belum ada UMKM yang ditolak' : 
            'Tidak ada data UMKM'}
         </div>
       ) : (
