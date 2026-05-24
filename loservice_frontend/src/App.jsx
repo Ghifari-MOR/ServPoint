@@ -55,6 +55,17 @@ function App() {
             </PrivateRoute>
           }
         />
+
+        <Route
+          path="/owner/edit-umkm"
+          element={
+            <PrivateRoute allowedRoles={["OWNER"]}>
+              <OwnerGuard requireUmkm={false}>
+                <UmkmForm />
+              </OwnerGuard>
+            </PrivateRoute>
+          }
+        />
         
         {/* Legacy route - redirect ke route baru */}
         <Route

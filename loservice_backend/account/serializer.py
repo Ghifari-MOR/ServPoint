@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
+from django.utils import timezone
 import re
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -223,6 +224,29 @@ class UMKMProductSerializer(serializers.ModelSerializer):
 class UMKMGallerySerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False, allow_null=True)
     image_url = serializers.CharField(required=False, allow_blank=True)
+
+    def to_internal_value(self, data):
+        """Accept common Postman aliases like UMKM/Image in addition to canonical field names."""
+        if hasattr(data, "copy"):
+            mutable_data = data.copy()
+        else:
+            mutable_data = dict(data)
+
+        aliases = {
+            "UMKM": "umkm",
+            "Umkm": "umkm",
+            "IMAGE": "image",
+            "Image": "image",
+            "IS_PRIMARY": "is_primary",
+            "Is_Primary": "is_primary",
+            "ISPRIMARY": "is_primary",
+        }
+
+        for alias, canonical in aliases.items():
+            if alias in mutable_data and canonical not in mutable_data:
+                mutable_data[canonical] = mutable_data[alias]
+
+        return super().to_internal_value(mutable_data)
     
     class Meta:
         model = UMKMGallery
@@ -298,6 +322,9 @@ class UMKMSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     branches = UMKMBranchSerializer(many=True, read_only=True)
     primary_image = serializers.SerializerMethodField()
+    total_reviews = serializers.SerializerMethodField()
+    average_rating = serializers.SerializerMethodField()
+    weekly_views = serializers.SerializerMethodField()
 
     class Meta:
         model = UMKM
@@ -310,11 +337,17 @@ class UMKMSerializer(serializers.ModelSerializer):
             "nama_umkm",
             "deskripsi",
             "telpon",
+            "total_views",
+            "unique_visitors",
+            "whatsapp_clicks",
             "status",
             "reviewed_by",
             "reviewed_at",
             "created_at",
             "update_at",
+            "total_reviews",
+            "average_rating",
+            "weekly_views",
             "branches",
             "primary_image",
             # write-only aliases
@@ -330,7 +363,7 @@ class UMKMSerializer(serializers.ModelSerializer):
             "jam_tutup",
             "hari_operasional",
         ]
-        read_only_fields = ["umkm_id", "user", "status", "reviewed_by", "reviewed_at", "created_at", "update_at"]
+        read_only_fields = ["umkm_id", "user", "total_views", "unique_visitors", "whatsapp_clicks", "status", "reviewed_by", "reviewed_at", "created_at", "update_at"]
 
     def get_user(self, obj):
         """Serialize user with context to get profile_picture_url"""
@@ -361,6 +394,37 @@ class UMKMSerializer(serializers.ModelSerializer):
             return first_image.image_url
         
         return None
+
+    def get_total_reviews(self, obj):
+        return obj.reviews.count() if hasattr(obj, 'reviews') else 0
+
+    def get_average_rating(self, obj):
+        reviews = list(obj.reviews.all()) if hasattr(obj, 'reviews') else []
+        if not reviews:
+            return 0.0
+        total = sum(float(review.rating or 0) for review in reviews)
+        return round(total / len(reviews), 1)
+
+    def get_weekly_views(self, obj):
+        from datetime import timedelta
+        from django.db.models import Count
+
+        labels = ['SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB', 'MIN']
+        today = timezone.localdate()
+        start = today - timedelta(days=6)
+        counts = {
+            item['visit_date']: item['count']
+            for item in obj.visit_logs.filter(visit_date__range=(start, today)).values('visit_date').annotate(count=Count('visit_id'))
+        }
+
+        series = []
+        for offset in range(7):
+            day = start + timedelta(days=offset)
+            series.append({
+                'label': labels[day.weekday()],
+                'value': counts.get(day, 0),
+            })
+        return series
 
     def validate(self, attrs):
         # Map aliases → model fields
@@ -427,13 +491,65 @@ class UMKMSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         # Pop branch-related fields (tidak update di sini, bikin endpoint terpisah kalau perlu)
-        validated_data.pop("address", None)
-        validated_data.pop("maps_url", None)
-        validated_data.pop("latitude", None)
-        validated_data.pop("longitude", None)
+        telpon_changed = "telpon" in validated_data
+        address = validated_data.pop("address", None)
+        maps_url = validated_data.pop("maps_url", None)
+        latitude = validated_data.pop("latitude", None)
+        longitude = validated_data.pop("longitude", None)
+        jam_buka = validated_data.pop("jam_buka", None)
+        jam_tutup = validated_data.pop("jam_tutup", None)
+        hari_operasional = validated_data.pop("hari_operasional", None)
 
         # Update UMKM fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+
+        request = self.context.get("request")
+        is_admin = bool(request and request.user and (request.user.is_staff or request.user.is_superuser or str(getattr(request.user, "role", "")).upper() == "ADMIN"))
+
+        if not is_admin and instance.status in {"APPROVED", "REJECTED"}:
+            instance.status = "PENDING"
+            instance.reviewed_by = None
+            instance.reviewed_at = None
+
+        branch = instance.branches.first() if hasattr(instance, "branches") else None
+        branch_should_update = any(
+            value not in (None, "")
+            for value in (address, maps_url, latitude, longitude, jam_buka, jam_tutup, hari_operasional)
+        ) or telpon_changed
+
+        if branch_should_update:
+            geom = None
+            if latitude is not None and longitude is not None:
+                geom = {
+                    "type": "Point",
+                    "coordinates": [float(longitude), float(latitude)],
+                }
+
+            if branch:
+                if address not in (None, ""):
+                    branch.alamat = address
+                branch.telpon = instance.telpon
+                if geom is not None:
+                    branch.geom = geom
+                if jam_buka not in (None, ""):
+                    branch.jam_buka = jam_buka
+                if jam_tutup not in (None, ""):
+                    branch.jam_tutup = jam_tutup
+                if hari_operasional not in (None, ""):
+                    branch.hari_operasional = hari_operasional
+                branch.save()
+            elif address or geom:
+                UMKMBranch.objects.create(
+                    umkm=instance,
+                    user=instance.user,
+                    alamat=address or "",
+                    telpon=instance.telpon or "",
+                    geom=geom,
+                    jam_buka=jam_buka or "08:00",
+                    jam_tutup=jam_tutup or "20:00",
+                    hari_operasional=hari_operasional or "Senin - Sabtu",
+                )
+
         instance.save()
         return instance

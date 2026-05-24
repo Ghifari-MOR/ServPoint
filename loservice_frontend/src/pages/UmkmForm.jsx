@@ -1,5 +1,5 @@
-import { useContext, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useContext, useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import { MapPin, Check, ExternalLink } from 'lucide-react'
 import api from '../services/api'
@@ -7,6 +7,9 @@ import api from '../services/api'
 export default function UmkmForm() {
   const { user } = useContext(AuthContext)
   const navigate = useNavigate()
+  const location = useLocation()
+  const editUmkm = location.state?.umkm || null
+  const isEditMode = Boolean(editUmkm) || location.pathname === '/owner/edit-umkm'
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [gettingLocation, setGettingLocation] = useState(false)
@@ -24,6 +27,62 @@ export default function UmkmForm() {
     jam_tutup: '20:00',
     hari_operasional: 'Senin - Sabtu',
   })
+
+  useEffect(() => {
+    const branch = editUmkm?.branches?.[0] || null
+    const coordinates = branch?.geom?.coordinates
+
+    if (editUmkm) {
+      setForm({
+        name: editUmkm.nama_umkm || '',
+        address: branch?.alamat || '',
+        category: editUmkm.kategori?.nama_kategori || '',
+        description: editUmkm.deskripsi || '',
+        contact: editUmkm.telpon || '',
+        latitude: Array.isArray(coordinates) && coordinates.length >= 2 ? String(coordinates[1]) : '',
+        longitude: Array.isArray(coordinates) && coordinates.length >= 2 ? String(coordinates[0]) : '',
+        jam_buka: branch?.jam_buka || '08:00',
+        jam_tutup: branch?.jam_tutup || '20:00',
+        hari_operasional: branch?.hari_operasional || 'Senin - Sabtu',
+      })
+      setLocationSuccess(Boolean(Array.isArray(coordinates) && coordinates.length >= 2))
+      setShowManualInput(true)
+      return
+    }
+
+    const loadExistingUmkm = async () => {
+      if (!isEditMode) return
+
+      try {
+        const { data } = await api.get('/umkm/')
+        const umkmList = Array.isArray(data) ? data : data?.results || []
+        const current = umkmList[0]
+        if (!current) return
+
+        const currentBranch = current?.branches?.[0] || null
+        const currentCoordinates = currentBranch?.geom?.coordinates
+
+        setForm({
+          name: current.nama_umkm || '',
+          address: currentBranch?.alamat || '',
+          category: current.kategori?.nama_kategori || '',
+          description: current.deskripsi || '',
+          contact: current.telpon || '',
+          latitude: Array.isArray(currentCoordinates) && currentCoordinates.length >= 2 ? String(currentCoordinates[1]) : '',
+          longitude: Array.isArray(currentCoordinates) && currentCoordinates.length >= 2 ? String(currentCoordinates[0]) : '',
+          jam_buka: currentBranch?.jam_buka || '08:00',
+          jam_tutup: currentBranch?.jam_tutup || '20:00',
+          hari_operasional: currentBranch?.hari_operasional || 'Senin - Sabtu',
+        })
+        setLocationSuccess(Boolean(Array.isArray(currentCoordinates) && currentCoordinates.length >= 2))
+        setShowManualInput(true)
+      } catch (err) {
+        console.error('Gagal memuat data UMKM untuk edit:', err)
+      }
+    }
+
+    loadExistingUmkm()
+  }, [editUmkm, isEditMode])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -162,18 +221,27 @@ export default function UmkmForm() {
       console.log('=== SENDING TO BACKEND ===')
       console.log('Payload:', payload)
 
-      const response = await api.post('/umkm/', payload)
+      const response = isEditMode && editUmkm?.umkm_id
+        ? await api.patch(`/umkm/${editUmkm.umkm_id}/`, payload)
+        : await api.post('/umkm/', payload)
       
       console.log('=== BACKEND SUCCESS ===')
       console.log('Response:', response.data)
       console.log('Status:', response.status)
       
-      alert('UMKM berhasil didaftarkan! Redirecting to owner page...')
+      alert(isEditMode ? 'UMKM berhasil diperbarui! Mengirim ulang untuk verifikasi admin...' : 'UMKM berhasil didaftarkan! Redirecting to owner page...')
       
       // Gunakan setTimeout untuk memastikan alert dibaca
       setTimeout(() => {
         console.log('=== REDIRECTING NOW ===')
-        window.location.href = '/owner?success=true&message=' + encodeURIComponent('UMKM berhasil didaftarkan! Menunggu verifikasi admin.')
+        navigate('/owner', {
+          replace: true,
+          state: {
+            message: isEditMode
+              ? 'Perubahan UMKM berhasil disimpan! Status kembali PENDING dan menunggu verifikasi admin.'
+              : 'UMKM berhasil didaftarkan! Menunggu verifikasi admin.'
+          }
+        })
       }, 500)
       
     } catch (e2) {
@@ -266,7 +334,7 @@ export default function UmkmForm() {
             color: '#1e293b',
             margin: '0 0 8px'
           }}>
-            Daftarkan UMKM Anda
+            {isEditMode ? 'Perbarui Data UMKM' : 'Daftarkan UMKM Anda'}
           </h1>
           <p style={{
             fontSize: 14,
@@ -274,7 +342,9 @@ export default function UmkmForm() {
             lineHeight: 1.6,
             margin: 0
           }}>
-            Lengkapi data UMKM secara lengkap dan akurat untuk dicatat di sistem ServPoint.
+            {isEditMode
+              ? 'Perbarui data UMKM Anda dan kirim ulang untuk verifikasi admin.'
+              : 'Lengkapi data UMKM secara lengkap dan akurat untuk dicatat di sistem ServPoint.'}
           </p>
         </div>
 
@@ -830,7 +900,7 @@ export default function UmkmForm() {
               transition: 'all 0.2s'
             }}
           >
-            {submitting ? 'Memproses...' : 'Daftarkan UMKM'}
+            {submitting ? 'Memproses...' : isEditMode ? 'Simpan Perubahan' : 'Daftarkan UMKM'}
           </button>
         </form>
 

@@ -1,19 +1,20 @@
-from rest_framework import viewsets, status
+from rest_framework import serializers, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny, BasePermission
 from rest_framework.response import Response
-from django.db.models import Q
+from django.db.models import Q, F
 from rest_framework.views import APIView
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
+import hashlib
 import re
 import logging
 
 logger = logging.getLogger(__name__)
 
-from .models import Kategori, UMKM, UMKMService, UMKMProduct, UMKMGallery, UMKMReview
+from .models import Kategori, UMKM, UMKMService, UMKMProduct, UMKMGallery, UMKMReview, UMKMVisit
 from .serializer import (
     KategoriSerializer, UMKMSerializer, UserSerializer, UMKMServiceSerializer,
     UMKMProductSerializer, UMKMGallerySerializer, UMKMReviewSerializer
@@ -64,6 +65,25 @@ class IsAdminForRead(BasePermission):
             return True
         
         # Allow ADMIN role
+        role = str(getattr(request.user, "role", "")).upper()
+        return role == "ADMIN"
+
+
+class IsAdminForKategoriWrite(BasePermission):
+    """Public read access for kategori, but only admin/staff can create/update/delete."""
+    message = "Hanya admin yang dapat menambah, mengubah, atau menghapus kategori."
+
+    def has_permission(self, request, view):
+        if request.method in ("GET", "HEAD", "OPTIONS"):
+            return True
+
+        if not request.user or not request.user.is_authenticated:
+            self.message = "Anda harus login terlebih dahulu."
+            return False
+
+        if getattr(request.user, "is_staff", False) or getattr(request.user, "is_superuser", False):
+            return True
+
         role = str(getattr(request.user, "role", "")).upper()
         return role == "ADMIN"
 
@@ -275,6 +295,21 @@ class UMKMProductViewSet(viewsets.ModelViewSet):
 class UMKMGalleryViewSet(viewsets.ModelViewSet):
     serializer_class = UMKMGallerySerializer
     permission_classes = [IsOwnerOrAdminForWrite]
+
+    def _get_request_value(self, *keys):
+        """Return the first non-empty request value matching any provided key, case-insensitively."""
+        data = self.request.data
+        lower_map = {str(key).lower(): key for key in data.keys()}
+
+        for key in keys:
+            if key in data and str(data.get(key)).strip():
+                return data.get(key)
+
+            match = lower_map.get(str(key).lower())
+            if match and str(data.get(match)).strip():
+                return data.get(match)
+
+        return None
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -293,7 +328,7 @@ class UMKMGalleryViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         # Get UMKM from request data
-        umkm_id = self.request.data.get('umkm')
+        umkm_id = self._get_request_value('umkm', 'UMKM', 'umkm_id', 'UMKM_ID')
         if not umkm_id:
             raise serializers.ValidationError({"umkm": "UMKM ID diperlukan"})
         
@@ -390,10 +425,10 @@ class UMKMReviewViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class KategoriViewSet(viewsets.ReadOnlyModelViewSet):
+class KategoriViewSet(viewsets.ModelViewSet):
     queryset = Kategori.objects.all().order_by("nama_kategori")
     serializer_class = KategoriSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminForKategoriWrite]
 
 
 class UMKMViewSet(viewsets.ModelViewSet):
@@ -457,6 +492,53 @@ class UMKMViewSet(viewsets.ModelViewSet):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+
+    def _visitor_key(self, request):
+        key = (request.data.get('visitor_key') or '').strip()
+        if key:
+            return key[:64]
+
+        forwarded_for = (request.META.get('HTTP_X_FORWARDED_FOR') or '').split(',')[0].strip()
+        remote_addr = (forwarded_for or request.META.get('REMOTE_ADDR') or 'anonymous').strip()
+        user_agent = (request.META.get('HTTP_USER_AGENT') or '').strip()
+        raw = f'{remote_addr}|{user_agent}'
+        return hashlib.sha1(raw.encode('utf-8')).hexdigest()
+
+    @action(detail=True, methods=["post"], url_path="track-view", permission_classes=[AllowAny])
+    def track_view(self, request, *args, **kwargs):
+        umkm = self.get_object()
+        visitor_key = self._visitor_key(request)
+        visit_date = timezone.localdate()
+
+        visit, created = UMKMVisit.objects.get_or_create(
+            umkm=umkm,
+            visitor_key=visitor_key,
+            visit_date=visit_date,
+        )
+
+        UMKM.objects.filter(pk=umkm.pk).update(total_views=F('total_views') + 1)
+        if created:
+            UMKM.objects.filter(pk=umkm.pk).update(unique_visitors=F('unique_visitors') + 1)
+
+        umkm.refresh_from_db(fields=['total_views', 'unique_visitors'])
+        return Response({
+            'detail': 'view tracked',
+            'umkm_id': str(umkm.umkm_id),
+            'total_views': umkm.total_views,
+            'unique_visitors': umkm.unique_visitors,
+            'visit_date': str(visit.visit_date),
+        })
+
+    @action(detail=True, methods=["post"], url_path="track-whatsapp", permission_classes=[AllowAny])
+    def track_whatsapp(self, request, *args, **kwargs):
+        umkm = self.get_object()
+        UMKM.objects.filter(pk=umkm.pk).update(whatsapp_clicks=F('whatsapp_clicks') + 1)
+        umkm.refresh_from_db(fields=['whatsapp_clicks'])
+        return Response({
+            'detail': 'whatsapp tracked',
+            'umkm_id': str(umkm.umkm_id),
+            'whatsapp_clicks': umkm.whatsapp_clicks,
+        })
 
     @action(detail=True, methods=["post"], url_path="approve")
     def approve(self, request, *args, **kwargs):

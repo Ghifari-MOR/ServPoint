@@ -66,29 +66,7 @@ export default function Owner() {
   const [galleryImagePreview, setGalleryImagePreview] = useState(null)
   const [uploadingGallery, setUploadingGallery] = useState(false)
 
-  // Dummy stats data
-  const stats = {
-    totalViews: 1240,
-    viewsGrowth: 5,
-    whatsappClicks: 45,
-    clicksGrowth: 12,
-    rating: 4.8,
-    ratingMax: 5.0,
-    totalReviews: 82
-  }
-
-  // Dummy chart data (7 hari terakhir)
-  const chartData = [
-    { label: 'SEN', value: 45 },
-    { label: 'SEL', value: 52 },
-    { label: 'RAB', value: 38 },
-    { label: 'KAM', value: 48 },
-    { label: 'JUM', value: 65 },
-    { label: 'SAB', value: 42 },
-    { label: 'MIN', value: 58 }
-  ]
-
- const [reviews, setReviews] = useState([])
+  const [reviews, setReviews] = useState([])
 
   // Check if user can edit (must be OWNER or ADMIN)
   const canEdit = user && user.role && (user.role.toUpperCase() === 'OWNER' || user.role.toUpperCase() === 'ADMIN')
@@ -145,6 +123,22 @@ export default function Owner() {
 
   useEffect(() => {
     fetchOwnerData()
+    const refreshInterval = setInterval(() => {
+      fetchOwnerData()
+    }, 30000)
+
+    const handleAnalyticsPing = (event) => {
+      if (event.key === 'servpoint_analytics_ping') {
+        fetchOwnerData()
+      }
+    }
+
+    window.addEventListener('storage', handleAnalyticsPing)
+
+    return () => {
+      clearInterval(refreshInterval)
+      window.removeEventListener('storage', handleAnalyticsPing)
+    }
   }, [])
 
  const fetchOwnerData = async () => {
@@ -205,6 +199,31 @@ export default function Owner() {
 
   const currentUmkm = umkmList[0] || null
   const umkmStatus = currentUmkm?.status?.toUpperCase() || 'PENDING'
+  const reviewCount = Array.isArray(reviews) ? reviews.length : 0
+  const ratingAverage = reviewCount > 0
+    ? reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviewCount
+    : Number(currentUmkm?.average_rating || 0)
+
+  const stats = {
+    totalViews: Number(currentUmkm?.total_views || 0),
+    whatsappClicks: Number(currentUmkm?.whatsapp_clicks || 0),
+    uniqueVisitors: Number(currentUmkm?.unique_visitors || 0),
+    rating: ratingAverage.toFixed(1),
+    ratingMax: 5.0,
+    totalReviews: reviewCount || Number(currentUmkm?.total_reviews || 0)
+  }
+
+  const chartData = Array.isArray(currentUmkm?.weekly_views) && currentUmkm.weekly_views.length === 7
+    ? currentUmkm.weekly_views
+    : [
+        { label: 'SEN', value: 0 },
+        { label: 'SEL', value: 0 },
+        { label: 'RAB', value: 0 },
+        { label: 'KAM', value: 0 },
+        { label: 'JUM', value: 0 },
+        { label: 'SAB', value: 0 },
+        { label: 'MIN', value: 0 }
+      ]
 
   const openAddServiceModal = () => {
     setEditingService(null)
@@ -469,6 +488,11 @@ export default function Owner() {
     setShowLogoutModal(false)
   }
 
+  const openEditUmkmForm = () => {
+    if (!currentUmkm?.umkm_id) return
+    navigate('/owner/edit-umkm', { state: { umkm: currentUmkm } })
+  }
+
   const getStatusBanner = () => {
     if (umkmStatus === 'PENDING') {
       return {
@@ -585,37 +609,59 @@ export default function Owner() {
           
           {/* Preview Button */}
           {currentUmkm?.umkm_id && (
-            <button
-              onClick={() => navigate(`/umkm/${currentUmkm.umkm_id}`)}
-              style={{
-                marginTop: 12,
-                width: '100%',
-                padding: '10px 12px',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                border: 'none',
-                borderRadius: 6,
-                color: '#fff',
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)'
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            >
-              <Eye size={14} />
-              Lihat Halaman UMKM
-            </button>
+            <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+              <button
+                onClick={() => navigate(`/umkm/${currentUmkm.umkm_id}`)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  border: 'none',
+                  borderRadius: 6,
+                  color: '#fff',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+              >
+                <Eye size={14} />
+                Lihat Halaman UMKM
+              </button>
+              <button
+                onClick={openEditUmkmForm}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: '#fff',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 6,
+                  color: '#334155',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6
+                }}
+              >
+                <Edit size={14} />
+                Edit Data UMKM
+              </button>
+            </div>
           )}
         </div>
 
@@ -819,6 +865,24 @@ export default function Owner() {
               <p style={{ margin: 0, fontSize: 13 }}>
                 {statusBanner.message}
               </p>
+              {umkmStatus === 'REJECTED' && (
+                <button
+                  onClick={openEditUmkmForm}
+                  style={{
+                    marginTop: 12,
+                    padding: '10px 14px',
+                    background: '#fff',
+                    border: '1px solid #f87171',
+                    borderRadius: 8,
+                    color: '#991b1b',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Perbaiki dan Ajukan Ulang
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -869,7 +933,7 @@ export default function Owner() {
         )}
 
         {activeMenu === 'settings' && (
-          <SettingsContent currentUmkm={currentUmkm} user={user} />
+          <SettingsContent currentUmkm={currentUmkm} user={user} onEditUmkm={openEditUmkmForm} />
         )}
       </main>
 
@@ -929,19 +993,26 @@ function OverviewContent({ stats, chartData, chartPoints, chartHeight, reviews, 
         Dashboard Overview
       </h1>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginBottom: 32 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20, marginBottom: 32 }}>
         <StatsCard
           icon={<Eye size={24} />}
           label="Total Dilihat"
           value={stats.totalViews}
-          growth={`+${stats.viewsGrowth}%`}
+          subtext="kunjungan detail"
           color="#3b82f6"
         />
         <StatsCard
           icon={<MessageCircle size={24} />}
           label="Klik WhatsApp"
           value={stats.whatsappClicks}
-          growth={`+${stats.clicksGrowth}%`}
+          subtext="aksi chat"
+          color="#10b981"
+        />
+        <StatsCard
+          icon={<TrendingUp size={24} />}
+          label="Pengunjung"
+          value={stats.uniqueVisitors}
+          subtext="pengunjung unik"
           color="#10b981"
         />
         <StatsCard
@@ -1016,7 +1087,7 @@ function ServicesContent({ services, onAdd, onEdit, onDelete, formatPrice, canEd
   )
 }
 
-function SettingsContent({ currentUmkm, user }) {
+function SettingsContent({ currentUmkm, user, onEditUmkm }) {
   const status = currentUmkm?.status?.toUpperCase() || '-'
 
   return (
@@ -1052,6 +1123,31 @@ function SettingsContent({ currentUmkm, user }) {
             </span>
           </div>
         </div>
+
+        {currentUmkm?.umkm_id && (
+          <button
+            onClick={onEditUmkm}
+            style={{
+              marginTop: 20,
+              padding: '12px 16px',
+              width: '100%',
+              background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
+              border: 'none',
+              borderRadius: 10,
+              color: '#fff',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8
+            }}
+          >
+            <Edit size={16} />
+            Edit Data UMKM
+          </button>
+        )}
       </div>
     </>
   )
