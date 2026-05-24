@@ -1,7 +1,8 @@
 import axios from 'axios'
 
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
-const apiOrigin = (configuredApiUrl || window.location.origin).replace(/\/$/, '')
+const isLocalhostUrl = (value) => /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?(\/.*)?$/i.test(value || '')
+const apiOrigin = (configuredApiUrl && !isLocalhostUrl(configuredApiUrl) ? configuredApiUrl : window.location.origin).replace(/\/$/, '')
 const API_BASE_URL = `${apiOrigin}/api`
 
 const api = axios.create({
