@@ -11,7 +11,7 @@ import 'leaflet-routing-machine/dist/leaflet-routing-machine.css'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
-import { Search, MapPin, Monitor, Smartphone, Printer, Star, ArrowRight, LayoutGrid, Settings, LogOut, Navigation, Map as MapIcon, X } from 'lucide-react'
+import { Search, MapPin, Monitor, Smartphone, Printer, Star, LayoutGrid, Settings, LogOut, Navigation, Map as MapIcon, X } from 'lucide-react'
 import { getResponsiveValues } from '../utils/responsive'
 
 // Fix Leaflet icons
@@ -467,7 +467,12 @@ export default function UserMap() {
         }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: isMobile ? 10 : 12, fontWeight: 700, color: '#3b82f6', letterSpacing: 0.5, marginBottom: 4 }}>
-              <MapPin size={isMobile ? 12 : 14} /> RADIUS 2 KM • KAMPUS STT-NF
+              <img
+                src="/logo-sp-v2.svg"
+                alt="ServicePoint"
+                style={{ width: isMobile ? 14 : 16, height: isMobile ? 14 : 16, objectFit: 'contain', flexShrink: 0 }}
+              />
+              <span>SERVICEPOINT</span>
             </div>
             <h1 style={{ 
               fontSize: isMobile ? 22 : 28, 
@@ -703,7 +708,7 @@ export default function UserMap() {
               </button>
             ) : (
               <button style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: 10, fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                Cari <ArrowRight size={18} />
+                Cari
               </button>
             )}
           </div>
@@ -868,7 +873,6 @@ export default function UserMap() {
                     onMouseLeave={(e) => e.currentTarget.style.background = '#3b82f6'}
                   >
                     Detail
-                    {!isMobile && <ArrowRight size={14} />}
                   </button>
                 </div>
               </div>
