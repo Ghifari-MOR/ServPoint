@@ -440,7 +440,6 @@ export default function UmkmDetail() {
       {/* Simplified Header */}
       <header className="umkm-header">
         <button className="back-btn" type="button" onClick={() => navigate(-1)} aria-label="Kembali ke halaman sebelumnya">
-          <span aria-hidden="true">←</span>
           <span>Kembali</span>
         </button>
         <div style={{ position: 'relative' }}>
@@ -706,7 +705,6 @@ export default function UmkmDetail() {
                           <span className="time">Est. {service.estimasi_waktu}</span>
                         )}
                       </div>
-                      <span className="arrow" aria-hidden="true">›</span>
                     </div>
                   ))}
                 </div>
