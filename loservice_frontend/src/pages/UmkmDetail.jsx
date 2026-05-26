@@ -439,7 +439,10 @@ export default function UmkmDetail() {
     <div className="umkm-detail-page">
       {/* Simplified Header */}
       <header className="umkm-header">
-        <button className="back-btn" onClick={() => navigate(-1)}>← Kembali</button>
+        <button className="back-btn" type="button" onClick={() => navigate(-1)} aria-label="Kembali ke halaman sebelumnya">
+          <span aria-hidden="true">←</span>
+          <span>Kembali</span>
+        </button>
         <div style={{ position: 'relative' }}>
           <div 
             onClick={() => setShowUserMenu(!showUserMenu)}
@@ -703,7 +706,7 @@ export default function UmkmDetail() {
                           <span className="time">Est. {service.estimasi_waktu}</span>
                         )}
                       </div>
-                      <span className="arrow">›</span>
+                      <span className="arrow" aria-hidden="true">›</span>
                     </div>
                   ))}
                 </div>
@@ -896,9 +899,9 @@ export default function UmkmDetail() {
                     {reviews.map((review) => (
                       <div key={review.review_id} className="review-item">
                         <div className="review-avatar">
-                          {review.user?.profile_picture_url || review.user?.profile_picture ? (
+                          {review.user?.profile_picture_url ? (
                             <img 
-                              src={review.user.profile_picture_url || review.user.profile_picture} 
+                              src={review.user.profile_picture_url} 
                               alt={review.user?.name || review.user?.email}
                               style={{ 
                                 width: '100%', 
