@@ -103,6 +103,20 @@ export default function UmkmDetail() {
     setShowLogoutModal(false)
   }, [])
 
+  const shouldTrackView = useMemo(() => {
+    const role = String(user?.role || '').toUpperCase()
+
+    if (role === 'OWNER' || role === 'ADMIN' || user?.is_staff || user?.is_superuser) {
+      return false
+    }
+
+    if (user?.user_id && umkm?.user?.user_id && umkm.user.user_id === user.user_id) {
+      return false
+    }
+
+    return true
+  }, [umkm?.user?.user_id, user])
+
   useEffect(() => {
     let active = true
     const fetchDetail = async () => {
@@ -338,20 +352,6 @@ export default function UmkmDetail() {
     const s = String(umkm?.status || '').toUpperCase()
     return s === 'APPROVED'
   }, [umkm])
-
-  const shouldTrackView = useMemo(() => {
-    const role = String(user?.role || '').toUpperCase()
-
-    if (role === 'OWNER' || role === 'ADMIN' || user?.is_staff || user?.is_superuser) {
-      return false
-    }
-
-    if (user?.user_id && umkm?.user?.user_id && umkm.user.user_id === user.user_id) {
-      return false
-    }
-
-    return true
-  }, [umkm?.user?.user_id, user])
 
   const mapsUrl = useMemo(() => {
     const firstBranch = Array.isArray(umkm?.branches) ? umkm.branches[0] : null
