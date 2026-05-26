@@ -326,15 +326,6 @@ class UMKMReviewSerializer(serializers.ModelSerializer):
             'comment': {'required': True},
             'umkm': {'required': True},
         }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Ensure context is passed to nested UserSerializer
-        if 'request' in self.context:
-            self.fields['user'] = UserSerializer(context=self.context)
-        # Remove user from required fields since it's set in perform_create
-        if 'user' in self.fields:
-            self.fields['user'].required = False
 
 
 class UMKMSerializer(serializers.ModelSerializer):

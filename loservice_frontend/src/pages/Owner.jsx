@@ -1003,9 +1003,9 @@ function OverviewContent({ stats, chartData, chartHeight, reviews, setActiveMenu
         />
         <StatsCard
           icon={<TrendingUp size={24} />}
-          label="Pengunjung"
-          value={stats.uniqueVisitors}
-          subtext="pengunjung unik"
+          label="Ulasan Masuk"
+          value={stats.totalReviews}
+          subtext="ulasan terkumpul"
           color="#10b981"
         />
         <StatsCard
@@ -1353,6 +1353,7 @@ function ReviewCardSimple({ review }) {
   }
 
   const displayName = review?.user?.name || review?.user?.email || review?.user_name || review?.user_email || 'User'
+  const avatarSrc = review?.user?.profile_picture_url || review?.user?.profile_picture
 
   return (
     <div style={{
@@ -1366,15 +1367,25 @@ function ReviewCardSimple({ review }) {
           <div style={{
             width: 40,
             height: 40,
-            background: '#3b82f6',
+            background: avatarSrc ? 'transparent' : '#3b82f6',
             borderRadius: '50%',
+            overflow: 'hidden',
             display: 'grid',
             placeItems: 'center',
             color: '#fff',
             fontSize: 16,
-            fontWeight: 600
+            fontWeight: 600,
+            flexShrink: 0
           }}>
-            {(displayName || 'U').charAt(0).toUpperCase()}
+            {avatarSrc ? (
+              <img
+                src={avatarSrc}
+                alt={displayName}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              (displayName || 'U').charAt(0).toUpperCase()
+            )}
           </div>
           <div>
             <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#0f172a' }}>

@@ -192,7 +192,7 @@ export default function UmkmDetail() {
   }, [id])
 
   useEffect(() => {
-    if (!umkm?.umkm_id) return
+    if (!umkm?.umkm_id || !shouldTrackView) return
 
     const trackView = async () => {
       try {
@@ -214,7 +214,7 @@ export default function UmkmDetail() {
     }
 
     trackView()
-  }, [umkm?.umkm_id])
+  }, [shouldTrackView, umkm?.umkm_id])
 
   const title = useMemo(() => umkm?.nama_umkm || 'Detail UMKM', [umkm])
 
@@ -338,6 +338,20 @@ export default function UmkmDetail() {
     const s = String(umkm?.status || '').toUpperCase()
     return s === 'APPROVED'
   }, [umkm])
+
+  const shouldTrackView = useMemo(() => {
+    const role = String(user?.role || '').toUpperCase()
+
+    if (role === 'OWNER' || role === 'ADMIN' || user?.is_staff || user?.is_superuser) {
+      return false
+    }
+
+    if (user?.user_id && umkm?.user?.user_id && umkm.user.user_id === user.user_id) {
+      return false
+    }
+
+    return true
+  }, [umkm?.user?.user_id, user])
 
   const mapsUrl = useMemo(() => {
     const firstBranch = Array.isArray(umkm?.branches) ? umkm.branches[0] : null
@@ -882,9 +896,9 @@ export default function UmkmDetail() {
                     {reviews.map((review) => (
                       <div key={review.review_id} className="review-item">
                         <div className="review-avatar">
-                          {review.user?.profile_picture_url ? (
+                          {review.user?.profile_picture_url || review.user?.profile_picture ? (
                             <img 
-                              src={review.user.profile_picture_url} 
+                              src={review.user.profile_picture_url || review.user.profile_picture} 
                               alt={review.user?.name || review.user?.email}
                               style={{ 
                                 width: '100%', 
