@@ -22,6 +22,15 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 })
 
+const currentLocationIcon = L.icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowUrl: markerShadow,
+  shadowSize: [41, 41]
+})
+
 function MapResizer({ onMapReady }) {
   const map = useMap()
   useEffect(() => {
@@ -116,6 +125,39 @@ export default function UserMap() {
 
   const handleLogoutCancel = () => {
     setShowLogoutModal(false)
+  }
+
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) {
+      alert('Browser Anda tidak mendukung GPS.')
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        }
+
+        setUserLocation(nextLocation)
+
+        if (mapInstance) {
+          mapInstance.flyTo([nextLocation.lat, nextLocation.lng], 16, {
+            animate: true,
+            duration: 0.75
+          })
+        }
+      },
+      () => {
+        alert('Tidak bisa mengambil lokasi Anda. Pastikan izin lokasi aktif.')
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    )
   }
 
   // Get user location
@@ -882,22 +924,16 @@ export default function UserMap() {
           {/* Map - Hidden on Mobile, Modal Available */}
           {!isMobile && (
             <div style={{ background: '#f1f5f9', borderRadius: 24, overflow: 'hidden', border: '1px solid #e2e8f0', position: 'relative' }}>
-              <MapContainer center={mapCenter} zoom={13} style={{ width: '100%', height: '100%', background: '#f8fafc' }}>
+              <MapContainer center={mapCenter} zoom={13} style={{ width: '100%', height: '100%', background: '#f8fafc' }} maxBounds={[[ -85, -180 ], [ 85, 180 ]]} maxBoundsViscosity={1} worldCopyJump={false}>
                 <MapResizer onMapReady={setMapInstance} />
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  noWrap
                 />
 
                 {userLocation && (
-                  <Marker position={[userLocation.lat, userLocation.lng]} icon={L.icon({
-                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowUrl: markerShadow,
-                    shadowSize: [41, 41]
-                  })}>
+                  <Marker position={[userLocation.lat, userLocation.lng]} icon={currentLocationIcon}>
                     <Popup>
                       <strong>Lokasi Anda</strong>
                     </Popup>
@@ -914,12 +950,26 @@ export default function UserMap() {
                 ))}
 
                 <div style={{ position: 'absolute', bottom: 24, right: 24, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ background: '#fff', borderRadius: 12, padding: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
-                    <span style={{ fontSize: 18, fontWeight: 600 }}>+</span>
-                  </div>
-                  <div style={{ background: '#fff', borderRadius: 12, padding: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
-                    <span style={{ fontSize: 18, fontWeight: 600 }}>-</span>
-                  </div>
+                  <button
+                    onClick={handleLocateMe}
+                    title="Cari posisi saya"
+                    style={{
+                      background: '#3b82f6',
+                      color: '#fff',
+                      borderRadius: 12,
+                      padding: 10,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      cursor: 'pointer',
+                      display: 'grid',
+                      placeItems: 'center',
+                      border: 'none',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#2563eb'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = '#3b82f6'}
+                  >
+                    <Navigation size={18} />
+                  </button>
                   {routingControl && (
                     <button
                       onClick={clearRoute}
@@ -989,22 +1039,16 @@ export default function UserMap() {
 
             {/* Modal Map */}
             <div style={{ flex: 1, overflow: 'hidden' }}>
-              <MapContainer center={mapCenter} zoom={13} style={{ width: '100%', height: '100%', background: '#f8fafc' }}>
+              <MapContainer center={mapCenter} zoom={13} style={{ width: '100%', height: '100%', background: '#f8fafc' }} maxBounds={[[ -85, -180 ], [ 85, 180 ]]} maxBoundsViscosity={1} worldCopyJump={false}>
                 <MapResizer onMapReady={setMapInstance} />
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  noWrap
                 />
 
                 {userLocation && (
-                  <Marker position={[userLocation.lat, userLocation.lng]} icon={L.icon({
-                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowUrl: markerShadow,
-                    shadowSize: [41, 41]
-                  })}>
+                  <Marker position={[userLocation.lat, userLocation.lng]} icon={currentLocationIcon}>
                     <Popup>
                       <strong>Lokasi Anda</strong>
                     </Popup>
@@ -1021,12 +1065,26 @@ export default function UserMap() {
                 ))}
 
                 <div style={{ position: 'absolute', bottom: 24, right: 24, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ background: '#fff', borderRadius: 12, padding: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
-                    <span style={{ fontSize: 18, fontWeight: 600 }}>+</span>
-                  </div>
-                  <div style={{ background: '#fff', borderRadius: 12, padding: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
-                    <span style={{ fontSize: 18, fontWeight: 600 }}>-</span>
-                  </div>
+                  <button
+                    onClick={handleLocateMe}
+                    title="Cari posisi saya"
+                    style={{
+                      background: '#3b82f6',
+                      color: '#fff',
+                      borderRadius: 12,
+                      padding: 10,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      cursor: 'pointer',
+                      display: 'grid',
+                      placeItems: 'center',
+                      border: 'none',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#2563eb'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = '#3b82f6'}
+                  >
+                    <Navigation size={18} />
+                  </button>
                   {routingControl && (
                     <button
                       onClick={clearRoute}
