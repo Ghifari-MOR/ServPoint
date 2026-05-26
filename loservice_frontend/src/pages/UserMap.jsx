@@ -31,6 +31,15 @@ const currentLocationIcon = L.icon({
   shadowSize: [41, 41]
 })
 
+const umkmMarkerIcon = L.icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowUrl: markerShadow,
+  shadowSize: [41, 41]
+})
+
 function MapResizer({ onMapReady }) {
   const map = useMap()
   useEffect(() => {
@@ -941,7 +950,7 @@ export default function UserMap() {
                 )}
 
                 {markers.map(m => (
-                  <Marker key={m.key} position={[m.lat, m.lng]}>
+                  <Marker key={m.key} position={[m.lat, m.lng]} icon={umkmMarkerIcon}>
                     <Popup>
                       <strong>{m.name}</strong><br />
                       {m.kategori}
@@ -1056,7 +1065,7 @@ export default function UserMap() {
                 )}
 
                 {markers.map(m => (
-                  <Marker key={m.key} position={[m.lat, m.lng]}>
+                  <Marker key={m.key} position={[m.lat, m.lng]} icon={umkmMarkerIcon}>
                     <Popup>
                       <strong>{m.name}</strong><br />
                       {m.kategori}
