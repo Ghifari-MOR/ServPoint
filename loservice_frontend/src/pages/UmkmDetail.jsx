@@ -206,6 +206,7 @@ export default function UmkmDetail() {
             unique_visitors: data.unique_visitors ?? current.unique_visitors
           } : current)
           localStorage.setItem('servpoint_analytics_ping', String(Date.now()))
+          window.dispatchEvent(new Event('servpoint_analytics_ping'))
         }
       } catch (e) {
         console.error('[UMKM Detail] Track view failed:', e?.response?.data || e.message)
@@ -389,6 +390,7 @@ export default function UmkmDetail() {
           whatsapp_clicks: data.whatsapp_clicks ?? current.whatsapp_clicks
         } : current)
         localStorage.setItem('servpoint_analytics_ping', String(Date.now()))
+        window.dispatchEvent(new Event('servpoint_analytics_ping'))
       }
     }).catch((e) => {
       console.error('[UMKM Detail] Track WhatsApp failed:', e?.response?.data || e.message)

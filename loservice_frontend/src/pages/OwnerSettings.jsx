@@ -562,7 +562,7 @@ export default function OwnerSettings() {
                     <InfoCard label="Terdaftar Sejak" value={new Date().toLocaleDateString('id-ID')} />
                     <InfoCard label="Kebijakan Privasi" value="Lihat kebijakan →" isLink />
                     <InfoCard label="Pusat Bantuan" value="Hubungi support →" isLink />
-                    <InfoCard label="Website" value="servpoint.com" isLast isLink />
+                    <InfoCard label="Website" value="servicepoint.com" isLast isLink />
                   </div>
                 </div>
               )}

@@ -216,13 +216,13 @@ export default function Owner() {
   const chartData = Array.isArray(currentUmkm?.weekly_views) && currentUmkm.weekly_views.length === 7
     ? currentUmkm.weekly_views
     : [
-        { label: 'SEN', value: 0 },
-        { label: 'SEL', value: 0 },
-        { label: 'RAB', value: 0 },
-        { label: 'KAM', value: 0 },
-        { label: 'JUM', value: 0 },
-        { label: 'SAB', value: 0 },
-        { label: 'MIN', value: 0 }
+        { label: 'Senin', value: 0 },
+        { label: 'Selasa', value: 0 },
+        { label: 'Rabu', value: 0 },
+        { label: 'Kamis', value: 0 },
+        { label: 'Jumat', value: 0 },
+        { label: 'Sabtu', value: 0 },
+        { label: 'Minggu', value: 0 }
       ]
 
   const openAddServiceModal = () => {
@@ -467,13 +467,7 @@ export default function Owner() {
     return `Rp ${parseInt(max).toLocaleString()}`
   }
 
-  const maxChartValue = Math.max(...chartData.map(d => d.value))
   const chartHeight = 180
-  const chartPoints = chartData.map((d, i) => {
-    const x = (i / (chartData.length - 1)) * 100
-    const y = chartHeight - (d.value / maxChartValue) * (chartHeight - 20)
-    return `${x},${y}`
-  }).join(' ')
 
   const handleLogout = () => {
     setShowLogoutModal(true)
@@ -891,7 +885,6 @@ export default function Owner() {
           <OverviewContent 
             stats={stats}
             chartData={chartData}
-            chartPoints={chartPoints}
             chartHeight={chartHeight}
             reviews={reviews}
             setActiveMenu={setActiveMenu}
@@ -986,7 +979,7 @@ export default function Owner() {
   )
 }
 
-function OverviewContent({ stats, chartData, chartPoints, chartHeight, reviews, setActiveMenu }) {
+function OverviewContent({ stats, chartData, chartHeight, reviews, setActiveMenu }) {
   return (
     <>
       <h1 style={{ margin: '0 0 32px 0', fontSize: 28, fontWeight: 700, color: '#0f172a' }}>
@@ -1025,7 +1018,7 @@ function OverviewContent({ stats, chartData, chartPoints, chartHeight, reviews, 
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20, marginBottom: 32 }}>
-        <ChartCard chartData={chartData} chartPoints={chartPoints} chartHeight={chartHeight} />
+        <ChartCard chartData={chartData} chartHeight={chartHeight} />
         <ActionsCard setActiveMenu={setActiveMenu} />
       </div>
 
@@ -2374,7 +2367,10 @@ function StatsCard({ icon, label, value, growth, subtext, color }) {
   )
 }
 
-function ChartCard({ chartData, chartPoints, chartHeight }) {
+function ChartCard({ chartData, chartHeight }) {
+  const maxValue = Math.max(0, ...chartData.map(d => Number(d.value) || 0))
+  const barMaxHeight = chartHeight - 40
+
   return (
     <div style={{
       background: '#fff',
@@ -2384,55 +2380,39 @@ function ChartCard({ chartData, chartPoints, chartHeight }) {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#0f172a' }}>
-          Pengunjung (7 Hari)
+          Kunjungan Detail UMKM per Hari
         </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <TrendingUp size={16} color="#10b981" />
-          <span style={{ fontSize: 13, color: '#10b981', fontWeight: 600 }}>+8%</span>
+          <span style={{ fontSize: 13, color: '#3b82f6', fontWeight: 600 }}>Senin - Minggu</span>
         </div>
       </div>
-      <svg
-        viewBox={`0 0 100 ${chartHeight}`}
-        style={{ width: '100%', height: chartHeight, overflow: 'visible' }}
-      >
-        <defs>
-          <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <polyline
-          points={`0,${chartHeight} ${chartPoints} 100,${chartHeight}`}
-          fill="url(#chartGrad)"
-        />
-        <polyline
-          points={chartPoints}
-          fill="none"
-          stroke="#3b82f6"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, height: chartHeight, paddingTop: 12 }}>
         {chartData.map((d, i) => {
-          const x = (i / (chartData.length - 1)) * 100
-          const y = chartHeight - (d.value / Math.max(...chartData.map(d => d.value))) * (chartHeight - 20)
+          const value = Number(d.value) || 0
+          const height = maxValue > 0 ? Math.max(12, (value / maxValue) * barMaxHeight) : 12
+
           return (
-            <circle
-              key={i}
-              cx={x}
-              cy={y}
-              r="3"
-              fill="#3b82f6"
-            />
+            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, height: '100%' }}>
+              <div style={{ minHeight: 20, fontSize: 12, fontWeight: 700, color: '#3b82f6' }}>
+                {value}
+              </div>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', width: '100%' }}>
+                <div
+                  style={{
+                    width: '100%',
+                    height,
+                    borderRadius: 10,
+                    background: 'linear-gradient(180deg, #60a5fa 0%, #1d4ed8 100%)',
+                    boxShadow: '0 8px 20px rgba(59, 130, 246, 0.18)'
+                  }}
+                />
+              </div>
+              <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600, textAlign: 'center' }}>
+                {d.label}
+              </span>
+            </div>
           )
         })}
-      </svg>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12 }}>
-        {chartData.map((d, i) => (
-          <span key={i} style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>
-            {d.label}
-          </span>
-        ))}
       </div>
     </div>
   )

@@ -325,7 +325,7 @@ export default function UmkmForm() {
               fontWeight: 700,
               color: '#0f172a'
             }}>
-              ServPoint
+              ServicePoint
             </span>
           </div>
           <h1 style={{
@@ -344,7 +344,7 @@ export default function UmkmForm() {
           }}>
             {isEditMode
               ? 'Perbarui data UMKM Anda dan kirim ulang untuk verifikasi admin.'
-              : 'Lengkapi data UMKM secara lengkap dan akurat untuk dicatat di sistem ServPoint.'}
+              : 'Lengkapi data UMKM secara lengkap dan akurat untuk dicatat di sistem ServicePoint.'}
           </p>
         </div>
 
@@ -911,7 +911,7 @@ export default function UmkmForm() {
           fontSize: 12,
           color: '#94a3b8'
         }}>
-          © 2024 ServPoint. All rights reserved.
+          © 2024 ServicePoint. All rights reserved.
         </p>
       </div>
     </div>

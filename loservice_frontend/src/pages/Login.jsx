@@ -82,7 +82,7 @@ export default function Login() {
               fontWeight: 700,
               color: '#0f172a'
             }}>
-              ServPoint
+              ServicePoint
             </span>
           </div>
           <h1 style={{
@@ -324,7 +324,7 @@ export default function Login() {
         color: '#94a3b8',
         padding: '0 16px'
       }}>
-        © 2024 ServPoint. All rights reserved.
+        © 2024 ServicePoint. All rights reserved.
       </div>
     </div>
   )

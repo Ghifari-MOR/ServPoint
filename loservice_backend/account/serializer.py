@@ -126,14 +126,31 @@ class RegisterOwnerSerializer(serializers.ModelSerializer):
         return user
 
 
+class ProfilePictureUploadSerializer(serializers.ModelSerializer):
+    """Serializer untuk upload profile picture saja - tidak require field lain"""
+    profile_picture_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ["user_id", "profile_picture", "profile_picture_url"]
+        read_only_fields = ["user_id", "profile_picture_url"]
+    
+    def get_profile_picture_url(self, obj):
+        if obj.profile_picture:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile_picture.url)
+        return None
+
+
 class UserSerializer(serializers.ModelSerializer):
     profile_picture_url = serializers.SerializerMethodField()
     profile_picture = serializers.ImageField(required=False, allow_null=True)
     
     class Meta:
         model = User
-        fields = ["user_id", "email", "username", "name", "role", "profile_picture", "profile_picture_url", "is_staff", "is_superuser"]
-        read_only_fields = ["user_id", "role", "profile_picture_url", "is_staff", "is_superuser"]
+        fields = ["user_id", "email", "username", "name", "role", "profile_picture", "profile_picture_url", "is_staff", "is_superuser", "created_at"]
+        read_only_fields = ["user_id", "role", "profile_picture_url", "is_staff", "is_superuser", "created_at"]
     
     def get_profile_picture_url(self, obj):
         if obj.profile_picture:

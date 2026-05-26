@@ -16,7 +16,7 @@ export default function Sidebar() {
                 }}>
                     SP
                 </div>
-                <span style={{ fontSize: 18, fontWeight: 700 }}>ServPoint</span>
+                <span style={{ fontSize: 18, fontWeight: 700 }}>ServicePoint</span>
             </div>
 
             <div style={{ marginBottom: 24, padding: '0 8px' }}>

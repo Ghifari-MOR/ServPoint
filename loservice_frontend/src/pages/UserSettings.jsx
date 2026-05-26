@@ -861,7 +861,7 @@ export default function UserSettings() {
                     <InfoCard
                       icon={<Info size={20} />}
                       title="Versi Aplikasi"
-                      description="LoService v1.0.0"
+                      description="ServicePoint v1.0.0"
                     />
                     <InfoCard
                       icon={<Shield size={20} />}
@@ -878,7 +878,7 @@ export default function UserSettings() {
                     <InfoCard
                       icon={<Globe size={20} />}
                       title="Website"
-                      description="www.loservice.com"
+                      description="www.servicepoint.id"
                       link="#"
                     />
                   </div>

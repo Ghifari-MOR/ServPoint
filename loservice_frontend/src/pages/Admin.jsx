@@ -22,6 +22,7 @@ import {
   Edit,
   Save,
   Trash2,
+  AlertCircle,
   CheckCircle as SuccessIcon,
   AlertCircle as ErrorIcon
 } from 'lucide-react'
@@ -1225,6 +1226,19 @@ function UsersTable({ users, loading, error, onRefresh, onDelete }) {
     }
   }
 
+  const formatRegisteredDate = (value) => {
+    if (!value) return '-'
+
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return '-'
+
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })
+  }
+
   return (
     <div style={{
       background: '#fff',
@@ -1350,7 +1364,7 @@ function UsersTable({ users, loading, error, onRefresh, onDelete }) {
                     </span>
                   </td>
                   <td style={{ padding: '16px 24px', fontSize: 14, color: '#475569' }}>
-                    {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {formatRegisteredDate(u.created_at || u.date_joined)}
                   </td>
                   <td style={{ padding: '16px 24px', textAlign: 'center' }}>
                     {u.role?.toUpperCase() === 'ADMIN' ? (

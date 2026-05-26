@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 from .models import Kategori, UMKM, UMKMService, UMKMProduct, UMKMGallery, UMKMReview, UMKMVisit
 from .serializer import (
     KategoriSerializer, UMKMSerializer, UserSerializer, UMKMServiceSerializer,
-    UMKMProductSerializer, UMKMGallerySerializer, UMKMReviewSerializer
+    UMKMProductSerializer, UMKMGallerySerializer, UMKMReviewSerializer, ProfilePictureUploadSerializer
 )
 
 User = get_user_model()
@@ -117,6 +117,12 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticatedForUserEndpoint]
+    # Use UUID-based lookup to avoid collisions between custom list-level
+    # actions (e.g. /users/upload-profile-picture/) and the detail route
+    # which uses a catch-all pattern. This prevents strings like
+    # 'upload-profile-picture' from being interpreted as a user PK.
+    lookup_field = "user_id"
+    lookup_value_regex = r"[0-9a-f\-]+"
     
     def get_queryset(self):
         is_staff = getattr(self.request.user, "is_staff", False)
@@ -190,6 +196,16 @@ class UserViewSet(viewsets.ModelViewSet):
             )
         
         return super().destroy(request, *args, **kwargs)
+
+    @action(detail=False, methods=["post"], url_path="upload-profile-picture", permission_classes=[IsAuthenticated])
+    def upload_profile_picture(self, request):
+        """Upload profile picture for the authenticated user"""
+        user = request.user
+        serializer = ProfilePictureUploadSerializer(user, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["get"], url_path="count")
     def count(self, request):

@@ -63,12 +63,47 @@ export default function UserMap() {
   const [mapInstance, setMapInstance] = useState(null)
   const [mapCenterState, setMapCenterState] = useState(null)
 
+  const refreshResults = async () => {
+    try {
+      const params = { status: 'APPROVED' }
+      if (query.trim()) params.q = query.trim()
+
+      if (selectedCategory && selectedCategory !== 'Semua Kategori') {
+        params.kategori = selectedCategory
+      }
+
+      const { data } = await api.get('/umkm/', { params })
+      setUmkmResults(Array.isArray(data) ? data : [])
+    } catch (e) {
+      console.error('Error fetching UMKM:', e)
+    }
+  }
+
   // Handle window resize
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth)
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  useEffect(() => {
+    const handleReviewPing = (event) => {
+      if (event.key === 'servpoint_analytics_ping') {
+        refreshResults()
+      }
+    }
+
+    const handleLocalReviewPing = () => {
+      refreshResults()
+    }
+
+    window.addEventListener('storage', handleReviewPing)
+    window.addEventListener('servpoint_analytics_ping', handleLocalReviewPing)
+    return () => {
+      window.removeEventListener('storage', handleReviewPing)
+      window.removeEventListener('servpoint_analytics_ping', handleLocalReviewPing)
+    }
+  }, [query, selectedCategory])
 
   const handleLogout = () => {
     setShowLogoutModal(true)
@@ -296,12 +331,11 @@ export default function UserMap() {
       try {
         const params = { status: 'APPROVED' }
         if (query.trim()) params.q = query.trim()
-        
-        // Add category filter
+
         if (selectedCategory && selectedCategory !== 'Semua Kategori') {
           params.kategori = selectedCategory
         }
-        
+
         const { data } = await api.get('/umkm/', { params })
         if (active) setUmkmResults(Array.isArray(data) ? data : [])
       } catch (e) {
@@ -414,6 +448,9 @@ export default function UserMap() {
 
   // Debug log
   console.log('UserMap render', { userLocation, mapInstance, hasState: !!location.state })
+
+  const getAverageRating = (umkm) => Number(umkm?.average_rating || 0).toFixed(1)
+  const getReviewCount = (umkm) => Number(umkm?.total_reviews || 0)
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
@@ -801,8 +838,12 @@ export default function UserMap() {
                 <div style={{ marginTop: 16, borderTop: '1px solid #f1f5f9', paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
                     <Star size={14} fill="#f59e0b" stroke="none" />
-                    <span style={{ fontSize: isMobile ? 12 : 13, fontWeight: 700, color: '#1e293b' }}>4.8</span>
-                    <span style={{ fontSize: isMobile ? 11 : 13, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>(124 ulasan)</span>
+                    <span style={{ fontSize: isMobile ? 12 : 13, fontWeight: 700, color: '#1e293b' }}>
+                      {getAverageRating(umkm)}
+                    </span>
+                    <span style={{ fontSize: isMobile ? 11 : 13, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      ({getReviewCount(umkm)} ulasan)
+                    </span>
                   </div>
                   
                   <button

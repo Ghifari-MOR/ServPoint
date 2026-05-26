@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -16,6 +17,15 @@ import OwnerGuard from './components/OwnerGuard'
 import { AuthProvider } from './context/AuthContext'
 
 function App() {
+  useEffect(() => {
+    document.title = 'ServicePoint'
+
+    const existingIcon = document.querySelector('link[rel="icon"]')
+    if (existingIcon) {
+      existingIcon.setAttribute('href', `/logo-sp-v2.svg?v=${Date.now()}`)
+    }
+  }, [])
+
   return (
     <AuthProvider>
       <Routes>
