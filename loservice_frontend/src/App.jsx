@@ -12,6 +12,7 @@ import Admin from './pages/Admin'
 import UmkmDetail from './pages/UmkmDetail'
 import UserSettings from './pages/UserSettings'
 import OwnerSettings from './pages/OwnerSettings'
+import Terms from './pages/Terms'
 import PrivateRoute from './components/PrivateRoute'
 import OwnerGuard from './components/OwnerGuard'
 import { AuthProvider } from './context/AuthContext'
@@ -32,6 +33,7 @@ function App() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/auth/google/callback" element={<GoogleCallback />} />
         <Route
           path="/dashboard"
