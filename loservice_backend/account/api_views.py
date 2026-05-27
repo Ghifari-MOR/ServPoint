@@ -536,7 +536,11 @@ class UMKMViewSet(viewsets.ModelViewSet):
                 | Q(kategori__nama_kategori__icontains=q)
                 | Q(user__email__icontains=q)
                 | Q(user__name__icontains=q)
+                | Q(services__nama_service__icontains=q)
+                | Q(services__deskripsi__icontains=q)
+                | Q(products__nama_produk__icontains=q)
             )
+            queryset = queryset.distinct()
 
         # Filter by kategori if provided
         kategori = (self.request.query_params.get("kategori") or "").strip()
@@ -550,6 +554,69 @@ class UMKMViewSet(viewsets.ModelViewSet):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+
+    @action(detail=False, methods=["get"], url_path="suggestions", permission_classes=[AllowAny])
+    def suggestions(self, request, *args, **kwargs):
+        q = (request.query_params.get("q") or "").strip()
+        if len(q) < 2:
+            return Response([])
+
+        limit = 8
+        seen = set()
+        suggestions = []
+
+        def add_suggestion(label, kind, umkm=None, source_id=None):
+            key = (kind, label.lower())
+            if not label or key in seen:
+                return
+            seen.add(key)
+            suggestions.append({
+                "label": label,
+                "type": kind,
+                "umkm_id": str(getattr(umkm, "umkm_id", "")) if umkm else None,
+                "umkm_name": getattr(umkm, "nama_umkm", None) if umkm else None,
+                "source_id": str(source_id) if source_id else None,
+            })
+
+        umkm_matches = (
+            UMKM.objects.filter(
+                Q(status="APPROVED")
+                & (
+                    Q(nama_umkm__icontains=q)
+                    | Q(deskripsi__icontains=q)
+                    | Q(telpon__icontains=q)
+                    | Q(kategori__nama_kategori__icontains=q)
+                    | Q(services__nama_service__icontains=q)
+                    | Q(services__deskripsi__icontains=q)
+                    | Q(products__nama_produk__icontains=q)
+                )
+            )
+            .select_related("kategori")
+            .distinct()[:limit]
+        )
+
+        for umkm in umkm_matches:
+            add_suggestion(umkm.nama_umkm, "UMKM", umkm=umkm)
+
+        service_matches = (
+            UMKMService.objects.filter(
+                Q(nama_service__icontains=q) | Q(deskripsi__icontains=q)
+            )
+            .select_related("umkm")
+            .order_by("nama_service")[:limit]
+        )
+        for service in service_matches:
+            add_suggestion(service.nama_service, "LAYANAN", umkm=service.umkm, source_id=service.service_id)
+
+        product_matches = (
+            UMKMProduct.objects.filter(nama_produk__icontains=q)
+            .select_related("umkm")
+            .order_by("nama_produk")[:limit]
+        )
+        for product in product_matches:
+            add_suggestion(product.nama_produk, "PRODUK", umkm=product.umkm, source_id=product.product_id)
+
+        return Response(suggestions[:limit])
 
     def _visitor_key(self, request):
         key = (request.data.get('visitor_key') or '').strip()
@@ -640,12 +707,47 @@ class UMKMViewSet(viewsets.ModelViewSet):
         umkm.save(update_fields=["status", "reviewed_by", "reviewed_at", "update_at"])
         return Response(self.get_serializer(umkm).data)
 
+    @action(detail=False, methods=["patch"], url_path="admin-update")
+    def admin_update(self, request, *args, **kwargs):
+        umkm_id = (request.data.get("umkm_id") or request.query_params.get("umkm_id") or "").strip()
+        if not umkm_id:
+            return Response({"detail": "umkm_id wajib diisi"}, status=400)
+
+        try:
+            umkm = UMKM.objects.select_related("user", "kategori").prefetch_related("branches", "gallery").get(umkm_id=umkm_id)
+        except UMKM.DoesNotExist:
+            return Response({"detail": "UMKM tidak ditemukan"}, status=404)
+
+        serializer = self.get_serializer(umkm, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
     def destroy(self, request, *args, **kwargs):
         # Hanya superuser yang bisa delete (via Django admin saja)
         is_superuser = getattr(request.user, "is_superuser", False)
         if not is_superuser:
             return Response({"detail": "Hanya superuser yang dapat menghapus UMKM."}, status=403)
         return super().destroy(request, *args, **kwargs)
+
+
+class UMKMAdminUpdateView(APIView):
+    permission_classes = [IsOwnerOrAdminForWrite]
+
+    def patch(self, request):
+        umkm_id = (request.data.get("umkm_id") or "").strip()
+        if not umkm_id:
+            return Response({"detail": "umkm_id wajib diisi"}, status=400)
+
+        try:
+            umkm = UMKM.objects.select_related("user", "kategori").prefetch_related("branches", "gallery").get(umkm_id=umkm_id)
+        except UMKM.DoesNotExist:
+            return Response({"detail": "UMKM tidak ditemukan"}, status=404)
+
+        serializer = UMKMSerializer(umkm, data=request.data, partial=True, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class ParseMapsUrlView(APIView):

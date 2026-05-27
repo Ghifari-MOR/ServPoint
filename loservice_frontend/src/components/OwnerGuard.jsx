@@ -13,7 +13,24 @@ export default function OwnerGuard({ children, requireUmkm = false }) {
     let active = true
     
     const checkOwnerUmkm = async () => {
-      if (!user || user.role !== 'OWNER') {
+      if (!user) {
+        console.log('[OwnerGuard] User not loaded')
+        if (active) setChecking(false)
+        return
+      }
+
+      const role = String(user.role || '').toUpperCase()
+
+      if (!requireUmkm && location.pathname === '/owner/register-umkm' && role !== 'OWNER') {
+        console.log('[OwnerGuard] Allowing onboarding route for non-owner user:', role)
+        if (active) {
+          setHasUmkm(false)
+          setChecking(false)
+        }
+        return
+      }
+
+      if (role !== 'OWNER') {
         console.log('[OwnerGuard] User is not OWNER or not loaded:', user?.role)
         if (active) setChecking(false)
         return

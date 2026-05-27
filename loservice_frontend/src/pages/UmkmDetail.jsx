@@ -1,7 +1,7 @@
 import { useContext, useEffect, useMemo, useState, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
-import { Reply, Settings, LogOut } from 'lucide-react'
+import { Reply, Settings, LogOut, Store, AlertTriangle } from 'lucide-react'
 import api from '../services/api'
 import LogoutConfirmModal from '../components/LogoutConfirmModal'
 
@@ -48,6 +48,7 @@ export default function UmkmDetail() {
   const [activeImage, setActiveImage] = useState(0)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [showBusinessUpgradeModal, setShowBusinessUpgradeModal] = useState(false)
   const [services, setServices] = useState([])
   const [products, setProducts] = useState([])
   const [servicesLoading, setServicesLoading] = useState(false)
@@ -88,6 +89,16 @@ export default function UmkmDetail() {
   const handleLogout = useCallback(() => {
     setShowLogoutModal(true)
   }, [])
+
+  const handleOpenBusinessUpgrade = useCallback(() => {
+    setShowUserMenu(false)
+    setShowBusinessUpgradeModal(true)
+  }, [])
+
+  const handleConfirmBusinessUpgrade = useCallback(() => {
+    setShowBusinessUpgradeModal(false)
+    navigate('/owner/register-umkm')
+  }, [navigate])
 
   const handleLogoutConfirm = useCallback(() => {
     const backendLoginUrl = `${window.location.origin}/admin/login/`
@@ -558,6 +569,31 @@ export default function UmkmDetail() {
                   </div>
                 </div>
               </div>
+              {String(user?.role || '').toUpperCase() === 'USER' && (
+                <button
+                  onClick={handleOpenBusinessUpgrade}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: 'none',
+                    background: 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    color: '#0f766e',
+                    textAlign: 'left',
+                    transition: 'all 0.2s',
+                    borderBottom: '1px solid #e2e8f0'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#f0fdfa'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <Store size={16} />
+                  Daftarkan Usaha Saya
+                </button>
+              )}
               <button
                 onClick={() => {
                   setShowUserMenu(false)
@@ -1265,6 +1301,82 @@ export default function UmkmDetail() {
         onConfirm={handleLogoutConfirm}
         onCancel={handleLogoutCancel}
       />
+
+      {showBusinessUpgradeModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 23, 42, 0.62)',
+          zIndex: 3000,
+          display: 'grid',
+          placeItems: 'center',
+          padding: 20
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: 520,
+            background: '#fff',
+            borderRadius: 20,
+            boxShadow: '0 24px 80px rgba(15, 23, 42, 0.28)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              padding: '22px 24px 16px',
+              background: 'linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%)',
+              borderBottom: '1px solid #e2e8f0'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#fee2e2', display: 'grid', placeItems: 'center', color: '#dc2626' }}>
+                  <AlertTriangle size={22} />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>Ubah Akun Menjadi Bisnis</p>
+                  <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>Perubahan peran dari USER ke OWNER bersifat permanen.</p>
+                </div>
+              </div>
+              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: '#334155' }}>
+                Jika Anda melanjutkan, akun Anda akan didaftarkan sebagai OWNER untuk mengelola UMKM. Perubahan ini tidak dapat dibatalkan ke peran semula.
+              </p>
+            </div>
+
+            <div style={{ padding: '18px 24px 24px' }}>
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 14, padding: 14, marginBottom: 20, color: '#991b1b', fontSize: 13, lineHeight: 1.6 }}>
+                Setelah menekan <strong>Lanjutkan</strong>, Anda akan masuk ke formulir pendaftaran UMKM dan jika berhasil disubmit, role akun akan otomatis berubah menjadi OWNER.
+              </div>
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setShowBusinessUpgradeModal(false)}
+                  style={{
+                    padding: '12px 18px',
+                    borderRadius: 12,
+                    border: '1px solid #cbd5e1',
+                    background: '#fff',
+                    color: '#334155',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleConfirmBusinessUpgrade}
+                  style={{
+                    padding: '12px 18px',
+                    borderRadius: 12,
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                    color: '#fff',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Lanjutkan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

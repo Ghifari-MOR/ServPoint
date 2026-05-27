@@ -11,7 +11,7 @@ import 'leaflet-routing-machine/dist/leaflet-routing-machine.css'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
-import { Search, MapPin, Monitor, Smartphone, Printer, Star, LayoutGrid, Settings, LogOut, Navigation, Map as MapIcon, X } from 'lucide-react'
+import { Search, MapPin, Monitor, Smartphone, Printer, Star, LayoutGrid, Settings, LogOut, Navigation, Map as MapIcon, X, Store, AlertTriangle } from 'lucide-react'
 import { getResponsiveValues } from '../utils/responsive'
 
 // Fix Leaflet icons
@@ -64,10 +64,14 @@ export default function UserMap() {
   const reponsive = getResponsiveValues()
   const isMobile = windowWidth <= 768
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [showBusinessUpgradeModal, setShowBusinessUpgradeModal] = useState(false)
 
   const [query, setQuery] = useState('')
   const [umkmResults, setUmkmResults] = useState([])
+  const [searchSuggestions, setSearchSuggestions] = useState([])
   const [loadingUmkm, setLoadingUmkm] = useState(false)
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState("Semua Kategori")
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showMapModal, setShowMapModal] = useState(false)
@@ -134,6 +138,16 @@ export default function UserMap() {
 
   const handleLogoutCancel = () => {
     setShowLogoutModal(false)
+  }
+
+  const handleOpenBusinessUpgrade = () => {
+    setShowUserMenu(false)
+    setShowBusinessUpgradeModal(true)
+  }
+
+  const handleConfirmBusinessUpgrade = () => {
+    setShowBusinessUpgradeModal(false)
+    navigate('/owner/register-umkm')
   }
 
   const handleLocateMe = () => {
@@ -399,6 +413,42 @@ export default function UserMap() {
     return () => { active = false; clearTimeout(t) }
   }, [query, selectedCategory])
 
+  useEffect(() => {
+    let active = true
+
+    const run = async () => {
+      const term = query.trim()
+      if (term.length < 2) {
+        if (active) {
+          setSearchSuggestions([])
+          setLoadingSuggestions(false)
+        }
+        return
+      }
+
+      setLoadingSuggestions(true)
+      try {
+        const { data } = await api.get('/umkm/suggestions/', {
+          params: { q: term }
+        })
+        if (active) {
+          setSearchSuggestions(Array.isArray(data) ? data : [])
+        }
+      } catch (e) {
+        console.error('Error fetching search suggestions:', e)
+        if (active) setSearchSuggestions([])
+      } finally {
+        if (active) setLoadingSuggestions(false)
+      }
+    }
+
+    const t = setTimeout(run, 250)
+    return () => {
+      active = false
+      clearTimeout(t)
+    }
+  }, [query])
+
   // Auto-show route if navigated from detail page with coords
   useEffect(() => {
     const state = location.state
@@ -632,6 +682,31 @@ export default function UserMap() {
                       {user.role || 'USER'}
                     </p>
                   </div>
+                  {String(user?.role || '').toUpperCase() === 'USER' && (
+                    <button
+                      onClick={handleOpenBusinessUpgrade}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        border: 'none',
+                        background: 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        cursor: 'pointer',
+                        fontSize: 14,
+                        color: '#0f766e',
+                        textAlign: 'left',
+                        transition: 'all 0.2s',
+                        borderBottom: '1px solid #e2e8f0'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#f0fdfa'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <Store size={16} />
+                      Daftarkan Usaha Saya
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       setShowUserMenu(false)
@@ -701,20 +776,92 @@ export default function UserMap() {
           flexWrap: isMobile ? 'wrap' : 'nowrap',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' 
         }}>
-          <div style={{ flex: isMobile ? '1 0 100%' : '1', display: 'flex', alignItems: 'center', gap: 12, paddingLeft: 12, minWidth: 0 }}>
+          <div style={{ flex: isMobile ? '1 0 100%' : '1', display: 'flex', alignItems: 'center', gap: 12, paddingLeft: 12, minWidth: 0, position: 'relative' }}>
             <Search size={20} color="#cbd5e1" style={{ flexShrink: 0 }} />
-            <input
-              placeholder={isMobile ? "Cari toko..." : "Cari nama toko, jenis kerusakan (mis: LCD, Baterai)..."}
-              style={{ 
-                border: 'none', 
-                outline: 'none', 
-                width: '100%', 
-                fontSize: isMobile ? 13 : 15, 
-                color: '#1e293b' 
-              }}
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-            />
+            <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
+              <input
+                placeholder={isMobile ? "Cari servis atau produk..." : "Cari nama UMKM, produk, atau layanan (mis: servis laptop, ganti layar HP)..."}
+                style={{ 
+                  border: 'none', 
+                  outline: 'none', 
+                  width: '100%', 
+                  fontSize: isMobile ? 13 : 15, 
+                  color: '#1e293b' 
+                }}
+                value={query}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => {
+                  setTimeout(() => setShowSuggestions(false), 150)
+                }}
+                onChange={e => {
+                  setQuery(e.target.value)
+                  setShowSuggestions(true)
+                }}
+              />
+
+              {showSuggestions && query.trim().length >= 2 && (
+                <div style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  left: 0,
+                  right: 0,
+                  background: '#fff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 14,
+                  boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
+                  zIndex: 30,
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ padding: '10px 14px', borderBottom: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700, color: '#64748b' }}>
+                    Saran pencarian
+                  </div>
+                  {loadingSuggestions ? (
+                    <div style={{ padding: '12px 14px', fontSize: 13, color: '#64748b' }}>Mencari saran...</div>
+                  ) : searchSuggestions.length > 0 ? (
+                    searchSuggestions.map((suggestion, index) => (
+                      <button
+                        key={`${suggestion.type}-${suggestion.label}-${index}`}
+                        type="button"
+                        onMouseDown={(event) => {
+                          event.preventDefault()
+                          setQuery(suggestion.label)
+                          setShowSuggestions(false)
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '12px 14px',
+                          border: 'none',
+                          background: 'transparent',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2, flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{suggestion.label}</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: suggestion.type === 'LAYANAN' ? '#059669' : suggestion.type === 'PRODUK' ? '#2563eb' : '#7c3aed', background: '#f8fafc', borderRadius: 999, padding: '2px 8px' }}>
+                              {suggestion.type}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 12, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {suggestion.umkm_name || 'UMKM terkait'}
+                          </div>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div style={{ padding: '12px 14px', fontSize: 13, color: '#64748b' }}>
+                      Tidak ada saran yang cocok.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {!isMobile && <div style={{ height: 24, width: 1, background: '#e2e8f0', flexShrink: 0 }} />}
@@ -1137,6 +1284,82 @@ export default function UserMap() {
         onConfirm={handleLogoutConfirm}
         onCancel={handleLogoutCancel}
       />
+
+      {showBusinessUpgradeModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 23, 42, 0.62)',
+          zIndex: 3000,
+          display: 'grid',
+          placeItems: 'center',
+          padding: 20
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: 520,
+            background: '#fff',
+            borderRadius: 20,
+            boxShadow: '0 24px 80px rgba(15, 23, 42, 0.28)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              padding: '22px 24px 16px',
+              background: 'linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%)',
+              borderBottom: '1px solid #e2e8f0'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#fee2e2', display: 'grid', placeItems: 'center', color: '#dc2626' }}>
+                  <AlertTriangle size={22} />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>Ubah Akun Menjadi Bisnis</p>
+                  <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>Perubahan peran dari USER ke OWNER bersifat permanen.</p>
+                </div>
+              </div>
+              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: '#334155' }}>
+                Jika Anda melanjutkan, akun Anda akan didaftarkan sebagai OWNER untuk mengelola UMKM. Perubahan ini tidak dapat dibatalkan ke peran semula.
+              </p>
+            </div>
+
+            <div style={{ padding: '18px 24px 24px' }}>
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 14, padding: 14, marginBottom: 20, color: '#991b1b', fontSize: 13, lineHeight: 1.6 }}>
+                Setelah menekan <strong>Lanjutkan</strong>, Anda akan masuk ke formulir pendaftaran UMKM dan jika berhasil disubmit, role akun akan otomatis berubah menjadi OWNER.
+              </div>
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setShowBusinessUpgradeModal(false)}
+                  style={{
+                    padding: '12px 18px',
+                    borderRadius: 12,
+                    border: '1px solid #cbd5e1',
+                    background: '#fff',
+                    color: '#334155',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleConfirmBusinessUpgrade}
+                  style={{
+                    padding: '12px 18px',
+                    borderRadius: 12,
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                    color: '#fff',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Lanjutkan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -58,7 +58,7 @@ function App() {
         <Route
           path="/owner/register-umkm"
           element={
-            <PrivateRoute allowedRoles={["OWNER"]}>
+            <PrivateRoute allowedRoles={["USER", "OWNER"]}>
               <OwnerGuard requireUmkm={false}>
                 <UmkmForm />
               </OwnerGuard>

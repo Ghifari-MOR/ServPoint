@@ -496,10 +496,19 @@ class UMKMSerializer(serializers.ModelSerializer):
         jam_tutup = validated_data.pop("jam_tutup", "20:00")
         hari_operasional = validated_data.pop("hari_operasional", "Senin - Sabtu")
 
-        # Create UMKM
         request = self.context.get("request")
-        validated_data["user"] = request.user if request else None
-        umkm = UMKM.objects.create(**validated_data)
+        user = request.user if request else None
+
+        with transaction.atomic():
+            # Promote USER to OWNER once UMKM onboarding succeeds.
+            if user and not getattr(user, "is_staff", False) and not getattr(user, "is_superuser", False):
+                role = str(getattr(user, "role", "")).upper()
+                if role == "USER":
+                    user.role = "OWNER"
+                    user.save(update_fields=["role"])
+
+            validated_data["user"] = user
+            umkm = UMKM.objects.create(**validated_data)
 
         # Create default branch
         if address or maps_url or (latitude and longitude):
