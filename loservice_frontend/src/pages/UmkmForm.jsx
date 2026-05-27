@@ -27,6 +27,19 @@ export default function UmkmForm() {
     jam_tutup: '20:00',
     hari_operasional: 'Senin - Sabtu',
   })
+  const requiredMark = <span style={{ color: '#dc2626' }}> *</span>
+  const categoryOptions = [
+    'Smartphone & HP',
+    'Laptop & PC',
+    'Smartwatch',
+    'Tablet',
+    'TWS & Headphone',
+    'Kamera Digital',
+    'Printer & Scanner',
+    'Konsol Game',
+    'TV & Monitor',
+    'Peralatan Rumah Tangga',
+  ]
 
   useEffect(() => {
     const branch = editUmkm?.branches?.[0] || null
@@ -135,58 +148,34 @@ export default function UmkmForm() {
     console.log('=== FORM SUBMIT START ===')
     console.log('Form data:', form)
     
-    // Validasi semua field required
+    // Validasi field wajib
     if (!form.name.trim()) {
-      setError('Nama UMKM harus diisi')
-      alert('Nama UMKM harus diisi')
+      setError('Nama UMKM wajib diisi.')
+      alert('Nama UMKM wajib diisi.')
       return
     }
     
     if (!form.address.trim()) {
-      setError('Alamat harus diisi')
-      alert('Alamat harus diisi')
+      setError('Alamat Lengkap wajib diisi.')
+      alert('Alamat Lengkap wajib diisi.')
       return
     }
     
     if (!form.category.trim()) {
-      setError('Kategori harus diisi')
-      alert('Kategori harus diisi')
-      return
-    }
-    
-    if (!form.description.trim()) {
-      setError('Deskripsi harus diisi')
-      alert('Deskripsi harus diisi')
+      setError('Kategori wajib dipilih.')
+      alert('Kategori wajib dipilih.')
       return
     }
     
     if (!form.contact.trim()) {
-      setError('Kontak harus diisi')
-      alert('Kontak harus diisi')
-      return
-    }
-    
-    if (!form.jam_buka.trim()) {
-      setError('Jam buka harus diisi')
-      alert('Jam buka harus diisi')
-      return
-    }
-    
-    if (!form.jam_tutup.trim()) {
-      setError('Jam tutup harus diisi')
-      alert('Jam tutup harus diisi')
-      return
-    }
-    
-    if (!form.hari_operasional.trim()) {
-      setError('Hari operasional harus diisi')
-      alert('Hari operasional harus diisi')
+      setError('Kontak WhatsApp wajib diisi.')
+      alert('Kontak WhatsApp wajib diisi.')
       return
     }
     
     if (!form.latitude || !form.longitude) {
-      setError('Lokasi harus diisi. Gunakan GPS atau input manual.')
-      alert('Lokasi harus diisi. Klik tombol "Lokasi Berkali Didapat!" terlebih dahulu!')
+      setError('Lokasi UMKM wajib diisi. Gunakan GPS atau isi koordinat manual.')
+      alert('Lokasi UMKM wajib diisi. Gunakan GPS atau isi koordinat manual.')
       return
     }
     
@@ -399,16 +388,9 @@ export default function UmkmForm() {
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          {/* Nama UMKM */}
           <div style={{ marginBottom: 20 }}>
-            <label style={{
-              display: 'block',
-              fontSize: 14,
-              fontWeight: 600,
-              color: '#1e293b',
-              marginBottom: 8
-            }}>
-              Nama UMKM
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#1e293b', marginBottom: 8 }}>
+              Nama UMKM{requiredMark}
             </label>
             <input
               name="name"
@@ -416,29 +398,163 @@ export default function UmkmForm() {
               onChange={handleChange}
               required
               placeholder="Masukkan nama usaha Anda"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid #e2e8f0',
-                borderRadius: 8,
-                fontSize: 14,
-                outline: 'none',
-                transition: 'all 0.2s',
-                boxSizing: 'border-box'
-              }}
+              style={{ width: '100%', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
             />
           </div>
 
-          {/* Alamat Lengkap */}
           <div style={{ marginBottom: 20 }}>
-            <label style={{
-              display: 'block',
-              fontSize: 14,
-              fontWeight: 600,
-              color: '#1e293b',
-              marginBottom: 8
-            }}>
-              Alamat Lengkap
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#1e293b', marginBottom: 8 }}>
+              Kategori{requiredMark}
+            </label>
+            <select
+              name="category"
+              value={form.category}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box', appearance: 'auto', cursor: 'pointer', backgroundColor: '#fff' }}
+            >
+              <option value="">-- Pilih Kategori --</option>
+              {categoryOptions.map((item) => (
+                <option key={item} value={item}>{item}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#1e293b', marginBottom: 8 }}>
+              Kontak WhatsApp{requiredMark}
+            </label>
+            <input
+              name="contact"
+              value={form.contact}
+              onChange={handleChange}
+              required
+              placeholder="No. WA aktif"
+              style={{ width: '100%', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#1e293b', marginBottom: 8 }}>
+              Deskripsi Singkat
+            </label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              placeholder="Ceritakan UMKM Anda"
+              rows={3}
+              style={{ width: '100%', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box', resize: 'vertical' }}
+            />
+          </div>
+
+          <div style={{ background: '#f8f9fa', padding: 24, borderRadius: 12, marginBottom: 20 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1e293b', margin: '0 0 16px' }}>
+              Lokasi UMKM{requiredMark}
+            </h3>
+
+            {form.latitude && form.longitude ? (
+              <div style={{ background: '#e2e8f0', borderRadius: 8, height: 200, marginBottom: 16, position: 'relative', overflow: 'hidden' }}>
+                <iframe
+                  src={`https://www.google.com/maps?q=${form.latitude},${form.longitude}&output=embed`}
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                  loading="lazy"
+                />
+              </div>
+            ) : (
+              <div style={{ background: '#e2e8f0', borderRadius: 8, height: 200, marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: 14 }}>
+                <MapPin size={24} style={{ marginRight: 8 }} />
+                Lokasi belum diatur
+              </div>
+            )}
+
+            {!locationSuccess ? (
+              <button
+                type="button"
+                onClick={getCurrentLocation}
+                disabled={gettingLocation}
+                style={{ width: '100%', padding: '12px', background: gettingLocation ? '#a5b4fc' : '#10b981', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: gettingLocation ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}
+              >
+                <MapPin size={18} />
+                {gettingLocation ? 'Mendapatkan lokasi...' : 'Dapatkan Lokasi'}
+              </button>
+            ) : (
+              <div style={{ background: '#d1fae5', border: '1px solid #10b981', borderRadius: 8, padding: '12px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Check size={18} style={{ color: '#10b981' }} />
+                <span style={{ fontSize: 14, color: '#065f46', fontWeight: 500 }}>Lokasi berhasil didapat!</span>
+              </div>
+            )}
+
+            {form.latitude && form.longitude && (
+              <>
+                <p style={{ fontSize: 13, color: '#475569', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Check size={16} style={{ color: '#10b981' }} />
+                  Lokasi saat ini: Akurat (GPS: {form.latitude}, {form.longitude})
+                </p>
+
+                <div style={{ background: '#fff', padding: 12, borderRadius: 8, marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>Koordinat Terdeteksi:</div>
+                  <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
+                    <div><span style={{ color: '#64748b' }}>Latitude:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{form.latitude}</span></div>
+                    <div><span style={{ color: '#64748b' }}>Longitude:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{form.longitude}</span></div>
+                  </div>
+                </div>
+
+                <a
+                  href={getMapsUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#3b82f6', fontSize: 13, fontWeight: 500, textDecoration: 'none', marginBottom: 8 }}
+                >
+                  <ExternalLink size={14} />
+                  Lihat di Google Maps
+                </a>
+              </>
+            )}
+
+            <div style={{ marginTop: 12 }}>
+              <button
+                type="button"
+                onClick={() => setShowManualInput(!showManualInput)}
+                style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: 13, fontWeight: 500, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+              >
+                Atur lokasi secara manual
+              </button>
+
+              {showManualInput && (
+                <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#475569', marginBottom: 6 }}>Latitude</label>
+                    <input
+                      name="latitude"
+                      type="number"
+                      step="any"
+                      value={form.latitude}
+                      onChange={handleChange}
+                      placeholder="-6.200000"
+                      style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#475569', marginBottom: 6 }}>Longitude</label>
+                    <input
+                      name="longitude"
+                      type="number"
+                      step="any"
+                      value={form.longitude}
+                      onChange={handleChange}
+                      placeholder="106.816666"
+                      style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#1e293b', marginBottom: 8 }}>
+              Alamat Lengkap{requiredMark}
             </label>
             <input
               name="address"
@@ -446,203 +562,47 @@ export default function UmkmForm() {
               onChange={handleChange}
               required
               placeholder="Masukkan alamat lengkap lokasi usaha"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid #e2e8f0',
-                borderRadius: 8,
-                fontSize: 14,
-                outline: 'none',
-                transition: 'all 0.2s',
-                boxSizing: 'border-box'
-              }}
+              style={{ width: '100%', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
             />
           </div>
 
-          {/* Kategori */}
           <div style={{ marginBottom: 20 }}>
-            <label style={{
-              display: 'block',
-              fontSize: 14,
-              fontWeight: 600,
-              color: '#1e293b',
-              marginBottom: 8
-            }}>
-              Kategori
-            </label>
-            <select
-              name="category"
-              value={form.category}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid #e2e8f0',
-                borderRadius: 8,
-                fontSize: 14,
-                outline: 'none',
-                transition: 'all 0.2s',
-                boxSizing: 'border-box',
-                appearance: 'auto',
-                cursor: 'pointer',
-                backgroundColor: '#fff'
-              }}
-            >
-              <option value="">-- Pilih Kategori --</option>
-              <option value="Handphone">Handphone</option>
-              <option value="PC&Laptop">PC & Laptop</option>
-            </select>
-          </div>
-
-          {/* Deskripsi Singkat */}
-          <div style={{ marginBottom: 20 }}>
-            <label style={{
-              display: 'block',
-              fontSize: 14,
-              fontWeight: 600,
-              color: '#1e293b',
-              marginBottom: 8
-            }}>
-              Deskripsi Singkat
-            </label>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              required
-              placeholder="Ceritakan UMKM Anda"
-              rows={3}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid #e2e8f0',
-                borderRadius: 8,
-                fontSize: 14,
-                outline: 'none',
-                transition: 'all 0.2s',
-                boxSizing: 'border-box',
-                resize: 'vertical'
-              }}
-            />
-          </div>
-
-          {/* Kontak */}
-          <div style={{ marginBottom: 20 }}>
-            <label style={{
-              display: 'block',
-              fontSize: 14,
-              fontWeight: 600,
-              color: '#1e293b',
-              marginBottom: 8
-            }}>
-              Kontak (Whatsapp / Email)
-            </label>
-            <input
-              name="contact"
-              value={form.contact}
-              onChange={handleChange}
-              required
-              placeholder="No. WA / email"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid #e2e8f0',
-                borderRadius: 8,
-                fontSize: 14,
-                outline: 'none',
-                transition: 'all 0.2s',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
-
-          {/* Jam Operasional */}
-          <div style={{ marginBottom: 20 }}>
-            <label style={{
-              display: 'block',
-              fontSize: 14,
-              fontWeight: 600,
-              color: '#1e293b',
-              marginBottom: 8
-            }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#1e293b', marginBottom: 8 }}>
               Jam Operasional
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 12, color: '#64748b', marginBottom: 4, display: 'block' }}>
-                  Jam Buka
-                </label>
+                <label style={{ fontSize: 12, color: '#64748b', marginBottom: 4, display: 'block' }}>Jam Buka</label>
                 <input
                   type="time"
                   name="jam_buka"
                   value={form.jam_buka}
                   onChange={handleChange}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 8,
-                    fontSize: 14,
-                    outline: 'none',
-                    transition: 'all 0.2s',
-                    boxSizing: 'border-box'
-                  }}
+                  style={{ width: '100%', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
                 />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: '#64748b', marginBottom: 4, display: 'block' }}>
-                  Jam Tutup
-                </label>
+                <label style={{ fontSize: 12, color: '#64748b', marginBottom: 4, display: 'block' }}>Jam Tutup</label>
                 <input
                   type="time"
                   name="jam_tutup"
                   value={form.jam_tutup}
                   onChange={handleChange}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 8,
-                    fontSize: 14,
-                    outline: 'none',
-                    transition: 'all 0.2s',
-                    boxSizing: 'border-box'
-                  }}
+                  style={{ width: '100%', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
                 />
               </div>
             </div>
           </div>
 
-          {/* Hari Operasional */}
           <div style={{ marginBottom: 32 }}>
-            <label style={{
-              display: 'block',
-              fontSize: 14,
-              fontWeight: 600,
-              color: '#1e293b',
-              marginBottom: 8
-            }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#1e293b', marginBottom: 8 }}>
               Hari Operasional
             </label>
             <select
               name="hari_operasional"
               value={form.hari_operasional}
               onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid #e2e8f0',
-                borderRadius: 8,
-                fontSize: 14,
-                outline: 'none',
-                transition: 'all 0.2s',
-                boxSizing: 'border-box',
-                background: 'white'
-              }}
+              style={{ width: '100%', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box', background: 'white' }}
             >
               <option value="Senin - Minggu">Senin - Minggu (Buka Setiap Hari)</option>
               <option value="Senin - Sabtu">Senin - Sabtu</option>
@@ -651,258 +611,10 @@ export default function UmkmForm() {
             </select>
           </div>
 
-          {/* Lokasi UMKM Section */}
-          <div style={{
-            background: '#f8f9fa',
-            padding: 24,
-            borderRadius: 12,
-            marginBottom: 32
-          }}>
-            <h3 style={{
-              fontSize: 16,
-              fontWeight: 600,
-              color: '#1e293b',
-              margin: '0 0 16px'
-            }}>
-              Lokasi UMKM
-            </h3>
-
-            {/* Map Preview */}
-            {form.latitude && form.longitude ? (
-              <div style={{
-                background: '#e2e8f0',
-                borderRadius: 8,
-                height: 200,
-                marginBottom: 16,
-                position: 'relative',
-                overflow: 'hidden'
-              }}>
-                <iframe
-                  src={`https://www.google.com/maps?q=${form.latitude},${form.longitude}&output=embed`}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    border: 'none'
-                  }}
-                  loading="lazy"
-                />
-              </div>
-            ) : (
-              <div style={{
-                background: '#e2e8f0',
-                borderRadius: 8,
-                height: 200,
-                marginBottom: 16,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#64748b',
-                fontSize: 14
-              }}>
-                <MapPin size={24} style={{ marginRight: 8 }} />
-                Lokasi belum diatur
-              </div>
-            )}
-
-            {/* Get Location Button */}
-            {!locationSuccess ? (
-              <button
-                type="button"
-                onClick={getCurrentLocation}
-                disabled={gettingLocation}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: gettingLocation ? '#a5b4fc' : '#10b981',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: gettingLocation ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  marginBottom: 12
-                }}
-              >
-                <MapPin size={18} />
-                {gettingLocation ? 'Mendapatkan lokasi...' : 'Lokasi Berkali Didapat!'}
-              </button>
-            ) : (
-              <div style={{
-                background: '#d1fae5',
-                border: '1px solid #10b981',
-                borderRadius: 8,
-                padding: '12px 16px',
-                marginBottom: 12,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8
-              }}>
-                <Check size={18} style={{ color: '#10b981' }} />
-                <span style={{ fontSize: 14, color: '#065f46', fontWeight: 500 }}>
-                  Lokasi berhasil didapat!
-                </span>
-              </div>
-            )}
-
-            {/* Location Info */}
-            {form.latitude && form.longitude && (
-              <>
-                <p style={{
-                  fontSize: 13,
-                  color: '#475569',
-                  margin: '0 0 12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6
-                }}>
-                  <Check size={16} style={{ color: '#10b981' }} />
-                  Lokasi saat ini: Akurat (GPS: {form.latitude}, {form.longitude})
-                </p>
-
-                <div style={{
-                  background: '#fff',
-                  padding: 12,
-                  borderRadius: 8,
-                  marginBottom: 12
-                }}>
-                  <div style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>
-                    Koordinat Terdeteksi:
-                  </div>
-                  <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
-                    <div>
-                      <span style={{ color: '#64748b' }}>Latitude:</span>{' '}
-                      <span style={{ fontWeight: 600, color: '#1e293b' }}>{form.latitude}</span>
-                    </div>
-                    <div>
-                      <span style={{ color: '#64748b' }}>Longitude:</span>{' '}
-                      <span style={{ fontWeight: 600, color: '#1e293b' }}>{form.longitude}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <a
-                  href={getMapsUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    color: '#3b82f6',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    textDecoration: 'none',
-                    marginBottom: 8
-                  }}
-                >
-                  <ExternalLink size={14} />
-                  Lihat di Google Maps
-                </a>
-              </>
-            )}
-
-            {/* Manual Input Toggle */}
-            <div style={{ marginTop: 12 }}>
-              <button
-                type="button"
-                onClick={() => setShowManualInput(!showManualInput)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#3b82f6',
-                  fontSize: 13,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  padding: 0,
-                  textDecoration: 'underline'
-                }}
-              >
-                Atur lokasi secara manual
-              </button>
-
-              {showManualInput && (
-                <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: '#475569',
-                      marginBottom: 6
-                    }}>
-                      Latitude
-                    </label>
-                    <input
-                      name="latitude"
-                      type="number"
-                      step="any"
-                      value={form.latitude}
-                      onChange={handleChange}
-                      placeholder="-6.200000"
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: 6,
-                        fontSize: 13,
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: '#475569',
-                      marginBottom: 6
-                    }}>
-                      Longitude
-                    </label>
-                    <input
-                      name="longitude"
-                      type="number"
-                      step="any"
-                      value={form.longitude}
-                      onChange={handleChange}
-                      placeholder="106.816666"
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: 6,
-                        fontSize: 13,
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={submitting}
-            style={{
-              width: '100%',
-              padding: '14px',
-              background: submitting ? '#a5b4fc' : '#3b82f6',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              fontSize: 16,
-              fontWeight: 600,
-              cursor: submitting ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s'
-            }}
+            style={{ width: '100%', padding: '14px', background: submitting ? '#a5b4fc' : '#3b82f6', color: '#fff', border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 600, cursor: submitting ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}
           >
             {submitting ? 'Memproses...' : isEditMode ? 'Simpan Perubahan' : 'Daftarkan UMKM'}
           </button>
