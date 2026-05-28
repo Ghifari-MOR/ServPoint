@@ -490,12 +490,12 @@ export default function Owner() {
   const getStatusBanner = () => {
     if (umkmStatus === 'PENDING') {
       return {
-        bg: '#fef3c7',
-        border: '#fbbf24',
-        text: '#92400e',
+        bg: '#eff6ff',
+        border: '#93c5fd',
+        text: '#1d4ed8',
         icon: <AlertCircle size={20} />,
-        title: 'UMKM Menunggu Verifikasi',
-        message: 'Data UMKM Anda sedang ditinjau oleh admin. Anda akan mendapat notifikasi setelah disetujui.'
+        title: 'UMKM Masih Pending',
+        message: 'Status ini hanya memengaruhi visibilitas di pencarian publik. Seluruh fitur dashboard tetap bisa digunakan.'
       }
     }
     if (umkmStatus === 'REJECTED') {
@@ -682,7 +682,6 @@ export default function Owner() {
             label="Katalog Jasa"
             active={activeMenu === 'services'}
             onClick={() => setActiveMenu('services')}
-            disabled={umkmStatus !== 'APPROVED'}
             badge={services.length}
           />
           <SidebarLink
@@ -690,7 +689,6 @@ export default function Owner() {
             label="Produk"
             active={activeMenu === 'products'}
             onClick={() => setActiveMenu('products')}
-            disabled={umkmStatus !== 'APPROVED'}
             badge={products.length}
           />
           <SidebarLink
@@ -698,7 +696,6 @@ export default function Owner() {
             label="Galeri Foto"
             active={activeMenu === 'gallery'}
             onClick={() => setActiveMenu('gallery')}
-            disabled={umkmStatus !== 'APPROVED'}
             badge={gallery.length}
           />
           <SidebarLink
@@ -706,7 +703,6 @@ export default function Owner() {
             label="Ulasan"
             active={activeMenu === 'reviews'}
             onClick={() => setActiveMenu('reviews')}
-            disabled={umkmStatus !== 'APPROVED'}
           />
           <SidebarLink
             icon={<Settings size={18} />}
