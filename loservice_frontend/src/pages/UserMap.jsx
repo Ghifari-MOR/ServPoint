@@ -68,10 +68,7 @@ export default function UserMap() {
 
   const [query, setQuery] = useState('')
   const [umkmResults, setUmkmResults] = useState([])
-  const [searchSuggestions, setSearchSuggestions] = useState([])
   const [loadingUmkm, setLoadingUmkm] = useState(false)
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
-  const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState("Semua Kategori")
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showMapModal, setShowMapModal] = useState(false)
@@ -419,40 +416,25 @@ export default function UserMap() {
   }, [query, selectedCategory])
 
   useEffect(() => {
-    let active = true
+    const interval = setInterval(() => {
+      refreshResults()
+    }, 15000)
 
-    const run = async () => {
-      const term = query.trim()
-      if (term.length < 2) {
-        if (active) {
-          setSearchSuggestions([])
-          setLoadingSuggestions(false)
-        }
-        return
-      }
-
-      setLoadingSuggestions(true)
-      try {
-        const { data } = await api.get('/umkm/suggestions/', {
-          params: { q: term }
-        })
-        if (active) {
-          setSearchSuggestions(Array.isArray(data) ? data : [])
-        }
-      } catch (e) {
-        console.error('Error fetching search suggestions:', e)
-        if (active) setSearchSuggestions([])
-      } finally {
-        if (active) setLoadingSuggestions(false)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshResults()
       }
     }
 
-    const t = setTimeout(run, 250)
+    window.addEventListener('focus', refreshResults)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     return () => {
-      active = false
-      clearTimeout(t)
+      clearInterval(interval)
+      window.removeEventListener('focus', refreshResults)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [query])
+  }, [query, selectedCategory])
 
   // Auto-show route if navigated from detail page with coords
   useEffect(() => {
@@ -794,78 +776,8 @@ export default function UserMap() {
                   color: '#1e293b' 
                 }}
                 value={query}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => {
-                  setTimeout(() => setShowSuggestions(false), 150)
-                }}
-                onChange={e => {
-                  setQuery(e.target.value)
-                  setShowSuggestions(true)
-                }}
+                onChange={e => setQuery(e.target.value)}
               />
-
-              {showSuggestions && query.trim().length >= 2 && (
-                <div style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  left: 0,
-                  right: 0,
-                  background: '#fff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: 14,
-                  boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
-                  zIndex: 30,
-                  overflow: 'hidden'
-                }}>
-                  <div style={{ padding: '10px 14px', borderBottom: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700, color: '#64748b' }}>
-                    Saran pencarian
-                  </div>
-                  {loadingSuggestions ? (
-                    <div style={{ padding: '12px 14px', fontSize: 13, color: '#64748b' }}>Mencari saran...</div>
-                  ) : searchSuggestions.length > 0 ? (
-                    searchSuggestions.map((suggestion, index) => (
-                      <button
-                        key={`${suggestion.type}-${suggestion.label}-${index}`}
-                        type="button"
-                        onMouseDown={(event) => {
-                          event.preventDefault()
-                          setQuery(suggestion.label)
-                          setShowSuggestions(false)
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '12px 14px',
-                          border: 'none',
-                          background: 'transparent',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: 10,
-                          cursor: 'pointer',
-                          textAlign: 'left'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                      >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{suggestion.label}</span>
-                            <span style={{ fontSize: 11, fontWeight: 700, color: suggestion.type === 'LAYANAN' ? '#059669' : suggestion.type === 'PRODUK' ? '#2563eb' : '#7c3aed', background: '#f8fafc', borderRadius: 999, padding: '2px 8px' }}>
-                              {suggestion.type}
-                            </span>
-                          </div>
-                          <div style={{ fontSize: 12, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {suggestion.umkm_name || 'UMKM terkait'}
-                          </div>
-                        </div>
-                      </button>
-                    ))
-                  ) : (
-                    <div style={{ padding: '12px 14px', fontSize: 13, color: '#64748b' }}>
-                      Tidak ada saran yang cocok.
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
