@@ -467,11 +467,11 @@ class UMKMSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # Map aliases → model fields
-        if attrs.get("name"):
+        if "name" in attrs:
             attrs["nama_umkm"] = attrs.pop("name")
-        if attrs.get("description"):
+        if "description" in attrs:
             attrs["deskripsi"] = attrs.pop("description")
-        if attrs.get("contact"):
+        if "contact" in attrs:
             attrs["telpon"] = attrs.pop("contact")
 
         # Handle kategori by name or ID
