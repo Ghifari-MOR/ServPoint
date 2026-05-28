@@ -41,6 +41,33 @@ export default function UmkmForm() {
     'Peralatan Rumah Tangga',
   ]
 
+  const reverseGeocode = async (lat, lng) => {
+    const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim()
+
+    if (googleApiKey) {
+      const googleUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${encodeURIComponent(`${lat},${lng}`)}&key=${encodeURIComponent(googleApiKey)}&language=id`
+      const googleResponse = await fetch(googleUrl)
+      if (googleResponse.ok) {
+        const googleData = await googleResponse.json()
+        const googleAddress = googleData?.results?.[0]?.formatted_address
+        if (googleAddress) return googleAddress
+      }
+    }
+
+    const osmUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&zoom=18&addressdetails=1`
+    const osmResponse = await fetch(osmUrl, {
+      headers: {
+        'Accept-Language': 'id',
+      },
+    })
+    if (osmResponse.ok) {
+      const osmData = await osmResponse.json()
+      return osmData?.display_name || ''
+    }
+
+    return ''
+  }
+
   useEffect(() => {
     const branch = editUmkm?.branches?.[0] || null
     const coordinates = branch?.geom?.coordinates
@@ -112,16 +139,35 @@ export default function UmkmForm() {
     setError('')
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const lat = position.coords.latitude
         const lng = position.coords.longitude
+
         setForm((prev) => ({
           ...prev,
           latitude: String(lat),
           longitude: String(lng),
         }))
-        setLocationSuccess(true)
-        setGettingLocation(false)
+
+        try {
+          const address = await reverseGeocode(lat, lng)
+          if (address) {
+            setForm((prev) => ({
+              ...prev,
+              latitude: String(lat),
+              longitude: String(lng),
+              address,
+            }))
+          }
+          setLocationSuccess(true)
+          setShowManualInput(true)
+        } catch (reverseError) {
+          console.error('Gagal reverse geocoding:', reverseError)
+          setLocationSuccess(true)
+          setShowManualInput(true)
+        } finally {
+          setGettingLocation(false)
+        }
       },
       (err) => {
         setGettingLocation(false)
