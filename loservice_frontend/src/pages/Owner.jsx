@@ -21,7 +21,9 @@ import {
   DollarSign,
   Clock,
   Send,
-  Reply
+  Reply,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react'
 import { GalleryContent, GalleryModal } from './OwnerGalleryComponents'
 
@@ -198,6 +200,8 @@ export default function Owner() {
 }
 
   const currentUmkm = umkmList[0] || null
+  const currentBranch = currentUmkm?.branches?.[0] || null
+  const isBusinessOpen = currentBranch?.is_open_now !== false
   const umkmStatus = currentUmkm?.status?.toUpperCase() || 'PENDING'
   const reviewCount = Array.isArray(reviews) ? reviews.length : 0
   const ratingAverage = reviewCount > 0
@@ -487,6 +491,22 @@ export default function Owner() {
     navigate('/owner/edit-umkm', { state: { umkm: currentUmkm } })
   }
 
+  const handleToggleBusinessStatus = async () => {
+    if (!currentUmkm?.umkm_id) return
+
+    try {
+      await api.patch(`/umkm/${currentUmkm.umkm_id}/`, {
+        is_open_now: !isBusinessOpen,
+      })
+      setSuccessMessage(isBusinessOpen ? 'UMKM berhasil ditutup.' : 'UMKM berhasil dibuka.')
+      setTimeout(() => setSuccessMessage(''), 3000)
+      await fetchOwnerData()
+    } catch (e) {
+      console.error('Error toggling business status:', e)
+      alert(e?.response?.data?.detail || 'Gagal mengubah status buka/tutup UMKM')
+    }
+  }
+
   const getStatusBanner = () => {
     if (umkmStatus === 'PENDING') {
       return {
@@ -586,6 +606,21 @@ export default function Owner() {
           <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#1e293b' }}>
             {currentUmkm?.nama_umkm || user?.name || 'Toko Saya'}
           </p>
+          <div style={{
+            marginTop: 8,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '4px 8px',
+            borderRadius: 999,
+            background: isBusinessOpen ? '#d1fae5' : '#fee2e2',
+            color: isBusinessOpen ? '#065f46' : '#991b1b',
+            fontSize: 11,
+            fontWeight: 700,
+            width: 'fit-content'
+          }}>
+            {isBusinessOpen ? 'Sedang Buka' : 'Sedang Tutup'}
+          </div>
           {umkmStatus !== 'APPROVED' && (
             <div style={{
               marginTop: 8,
@@ -654,6 +689,27 @@ export default function Owner() {
               >
                 <Edit size={14} />
                 Edit Data UMKM
+              </button>
+              <button
+                onClick={handleToggleBusinessStatus}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: isBusinessOpen ? '#fef3c7' : '#d1fae5',
+                  border: `1px solid ${isBusinessOpen ? '#f59e0b' : '#10b981'}`,
+                  borderRadius: 6,
+                  color: isBusinessOpen ? '#92400e' : '#065f46',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6
+                }}
+              >
+                {isBusinessOpen ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                {isBusinessOpen ? 'Tutup UMKM' : 'Buka UMKM'}
               </button>
             </div>
           )}

@@ -186,10 +186,11 @@ class UMKMBranchSerializer(serializers.ModelSerializer):
     jam_buka = serializers.CharField(required=False, default="08:00")
     jam_tutup = serializers.CharField(required=False, default="20:00")
     hari_operasional = serializers.CharField(required=False, default="Senin - Sabtu")
+    is_open_now = serializers.BooleanField(required=False, default=True)
     
     class Meta:
         model = UMKMBranch
-        fields = ["branch_id", "alamat", "telpon", "geom", "jam_buka", "jam_tutup", "hari_operasional", "created_at"]
+        fields = ["branch_id", "alamat", "telpon", "geom", "jam_buka", "jam_tutup", "hari_operasional", "is_open_now", "created_at"]
         read_only_fields = ["branch_id", "created_at"]
     
     def to_representation(self, instance):
@@ -200,6 +201,7 @@ class UMKMBranchSerializer(serializers.ModelSerializer):
         ret['jam_buka'] = getattr(instance, 'jam_buka', '08:00')
         ret['jam_tutup'] = getattr(instance, 'jam_tutup', '20:00')
         ret['hari_operasional'] = getattr(instance, 'hari_operasional', 'Senin - Sabtu')
+        ret['is_open_now'] = getattr(instance, 'is_open_now', True)
         
         return ret
 
@@ -352,6 +354,7 @@ class UMKMSerializer(serializers.ModelSerializer):
     jam_buka = serializers.CharField(write_only=True, required=False, allow_blank=True)
     jam_tutup = serializers.CharField(write_only=True, required=False, allow_blank=True)
     hari_operasional = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    is_open_now = serializers.BooleanField(write_only=True, required=False)
 
     # relasi yang di-serialize untuk response
     user = serializers.SerializerMethodField()
@@ -397,6 +400,7 @@ class UMKMSerializer(serializers.ModelSerializer):
             "jam_buka",
             "jam_tutup",
             "hari_operasional",
+            "is_open_now",
         ]
         read_only_fields = ["umkm_id", "user", "total_views", "unique_visitors", "whatsapp_clicks", "status", "reviewed_by", "reviewed_at", "created_at", "update_at"]
 
@@ -495,6 +499,7 @@ class UMKMSerializer(serializers.ModelSerializer):
         jam_buka = validated_data.pop("jam_buka", "08:00")
         jam_tutup = validated_data.pop("jam_tutup", "20:00")
         hari_operasional = validated_data.pop("hari_operasional", "Senin - Sabtu")
+        is_open_now = validated_data.pop("is_open_now", True)
 
         request = self.context.get("request")
         user = request.user if request else None
@@ -528,7 +533,8 @@ class UMKMSerializer(serializers.ModelSerializer):
                 geom=geom,
                 jam_buka=jam_buka,
                 jam_tutup=jam_tutup,
-                hari_operasional=hari_operasional
+                hari_operasional=hari_operasional,
+                is_open_now=bool(is_open_now),
             )
 
         return umkm
@@ -543,6 +549,7 @@ class UMKMSerializer(serializers.ModelSerializer):
         jam_buka = validated_data.pop("jam_buka", None)
         jam_tutup = validated_data.pop("jam_tutup", None)
         hari_operasional = validated_data.pop("hari_operasional", None)
+        is_open_now = validated_data.pop("is_open_now", None)
 
         # Update UMKM fields
         for attr, value in validated_data.items():
@@ -559,7 +566,7 @@ class UMKMSerializer(serializers.ModelSerializer):
         branch = instance.branches.first() if hasattr(instance, "branches") else None
         branch_should_update = any(
             value not in (None, "")
-            for value in (address, maps_url, latitude, longitude, jam_buka, jam_tutup, hari_operasional)
+            for value in (address, maps_url, latitude, longitude, jam_buka, jam_tutup, hari_operasional, is_open_now)
         ) or telpon_changed
 
         if branch_should_update:
@@ -582,6 +589,8 @@ class UMKMSerializer(serializers.ModelSerializer):
                     branch.jam_tutup = jam_tutup
                 if hari_operasional not in (None, ""):
                     branch.hari_operasional = hari_operasional
+                if is_open_now is not None:
+                    branch.is_open_now = bool(is_open_now)
                 branch.save()
             elif address or geom:
                 UMKMBranch.objects.create(
@@ -593,6 +602,7 @@ class UMKMSerializer(serializers.ModelSerializer):
                     jam_buka=jam_buka or "08:00",
                     jam_tutup=jam_tutup or "20:00",
                     hari_operasional=hari_operasional or "Senin - Sabtu",
+                    is_open_now=bool(is_open_now) if is_open_now is not None else True,
                 )
 
         instance.save()

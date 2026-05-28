@@ -150,6 +150,11 @@ export default function UserMap() {
     navigate('/owner/register-umkm')
   }
 
+  const getBusinessStatus = (umkm) => {
+    const branch = Array.isArray(umkm?.branches) ? umkm.branches[0] : null
+    return branch?.is_open_now !== false
+  }
+
   const handleLocateMe = () => {
     if (!navigator.geolocation) {
       alert('Browser Anda tidak mendukung GPS.')
@@ -985,7 +990,7 @@ export default function UserMap() {
                     <h4 style={{ margin: '0 0 4px', fontSize: isMobile ? 14 : 16, fontWeight: 700, color: '#1e293b' }}>{umkm.nama_umkm}</h4>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: isMobile ? 12 : 13, color: '#64748b', marginBottom: 8 }}>
                       <MapPin size={14} /> 
-                      {distance ? formatDistance(distance) : '-- m'} • <span style={{ color: '#16a34a', fontWeight: 600 }}>Buka</span>
+                      {distance ? formatDistance(distance) : '-- m'} • <span style={{ color: getBusinessStatus(umkm) ? '#16a34a' : '#dc2626', fontWeight: 600 }}>{getBusinessStatus(umkm) ? 'Buka' : 'Tutup'}</span>
                     </div>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <span style={{ background: '#f1f5f9', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 500, color: '#475569' }}>

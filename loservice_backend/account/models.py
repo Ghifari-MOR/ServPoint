@@ -141,6 +141,7 @@ class UMKMBranch(models.Model):
     jam_buka = models.CharField(max_length=10, default="08:00")  # Format: HH:MM
     jam_tutup = models.CharField(max_length=10, default="20:00")  # Format: HH:MM
     hari_operasional = models.CharField(max_length=50, default="Senin - Sabtu")
+    is_open_now = models.BooleanField(default=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
 
