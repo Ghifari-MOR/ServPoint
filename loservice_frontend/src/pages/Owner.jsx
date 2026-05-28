@@ -148,6 +148,7 @@ export default function Owner() {
   try {
     const { data } = await api.get('/umkm/')
     setUmkmList(Array.isArray(data) ? data : [])
+    localStorage.setItem('servpoint_owner_has_umkm', Array.isArray(data) && data.length > 0 ? 'true' : 'false')
     
     if (data && data[0]) {
       const umkmId = data[0].umkm_id

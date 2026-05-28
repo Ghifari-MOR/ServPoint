@@ -7,7 +7,7 @@ export default function OwnerGuard({ children, requireUmkm = false }) {
   const { user, loading: authLoading } = useContext(AuthContext)
   const location = useLocation()
   const [checking, setChecking] = useState(true)
-  const [hasUmkm, setHasUmkm] = useState(false)
+  const [hasUmkm, setHasUmkm] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -20,6 +20,7 @@ export default function OwnerGuard({ children, requireUmkm = false }) {
       }
 
       const role = String(user.role || '').toUpperCase()
+      const cacheKey = 'servpoint_owner_has_umkm'
 
       if (!requireUmkm && location.pathname === '/owner/register-umkm' && role !== 'OWNER') {
         console.log('[OwnerGuard] Allowing onboarding route for non-owner user:', role)
@@ -44,6 +45,7 @@ export default function OwnerGuard({ children, requireUmkm = false }) {
         const umkmList = Array.isArray(data) ? data : data?.results ? data.results : []
         console.log('[OwnerGuard] UMKM count:', umkmList.length)
         if (active) {
+          localStorage.setItem(cacheKey, umkmList.length > 0 ? 'true' : 'false')
           setHasUmkm(umkmList.length > 0)
           setChecking(false)
         }
@@ -52,8 +54,14 @@ export default function OwnerGuard({ children, requireUmkm = false }) {
         console.error('[OwnerGuard] Error response:', e?.response?.data)
         console.error('[OwnerGuard] Error status:', e?.response?.status)
         if (active) {
-          // Jika API gagal, asumsikan belum punya UMKM (safer untuk registration flow)
-          setHasUmkm(false)
+          const cachedHasUmkm = localStorage.getItem(cacheKey)
+          if (cachedHasUmkm === 'true') {
+            setHasUmkm(true)
+          } else if (cachedHasUmkm === 'false') {
+            setHasUmkm(false)
+          } else {
+            setHasUmkm(null)
+          }
           setChecking(false)
         }
       }
@@ -97,7 +105,7 @@ export default function OwnerGuard({ children, requireUmkm = false }) {
   }
 
   // Jika di halaman /owner (dashboard) tapi belum punya UMKM -> redirect ke form
-  if (requireUmkm && !hasUmkm) {
+  if (requireUmkm && hasUmkm === false) {
     console.log('[OwnerGuard] Redirecting to register-umkm (no UMKM found)')
     return <Navigate to="/owner/register-umkm" replace />
   }
