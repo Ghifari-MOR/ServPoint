@@ -4,12 +4,14 @@ from django.urls import path
 from .api_views import (
     KategoriViewSet, 
     UMKMViewSet, 
+    UMKMAdminUpdateView,
     ParseMapsUrlView, 
     UserViewSet,
     UMKMServiceViewSet,
     UMKMProductViewSet,
     UMKMGalleryViewSet,
-    UMKMReviewViewSet  # TAMBAHKAN INI
+    UMKMReviewViewSet,  # TAMBAHKAN INI
+    ReverseGeocodeView,
 )
 
 router = DefaultRouter()
@@ -22,5 +24,7 @@ router.register(r"umkm-gallery", UMKMGalleryViewSet, basename="umkm-gallery")
 router.register(r"umkm-reviews", UMKMReviewViewSet, basename="umkm-reviews")  # TAMBAHKAN INI
 
 urlpatterns = router.urls + [
+    path("umkm/admin-update/", UMKMAdminUpdateView.as_view(), name="umkm-admin-update"),
     path("utils/parse-maps/", ParseMapsUrlView.as_view(), name="parse_maps"),
+    path("utils/reverse-geocode/", ReverseGeocodeView.as_view(), name="reverse_geocode"),
 ]
