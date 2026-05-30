@@ -10,7 +10,6 @@ export const CATEGORY_OPTIONS = [
   'Printer & Scanner',
   'Konsol Game',
   'TV & Monitor',
-  'Peralatan Rumah Tangga',
 ]
 
 const CATEGORY_ALIASES = {

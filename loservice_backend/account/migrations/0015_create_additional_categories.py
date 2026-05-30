@@ -15,7 +15,6 @@ def create_categories(apps, schema_editor):
         {'nama_kategori': 'Printer & Scanner', 'deskripsi': 'Servis printer dan scanner'},
         {'nama_kategori': 'Konsol Game', 'deskripsi': 'Servis konsol game'},
         {'nama_kategori': 'TV & Monitor', 'deskripsi': 'Servis TV dan monitor'},
-        {'nama_kategori': 'Peralatan Rumah Tangga', 'deskripsi': 'Servis peralatan rumah tangga'},
     ]
 
     for cat_data in categories:
