@@ -1022,7 +1022,7 @@ export default function UserMap() {
                   noWrap
                 />
 
-                {userLocation && !isRouteActive && (
+                {userLocation && (
                   <Marker position={[userLocation.lat, userLocation.lng]} icon={currentLocationIcon}>
                     <Popup>
                       <strong>Lokasi Anda</strong>
@@ -1137,7 +1137,7 @@ export default function UserMap() {
                   noWrap
                 />
 
-                {userLocation && !isRouteActive && (
+                {userLocation && (
                   <Marker position={[userLocation.lat, userLocation.lng]} icon={currentLocationIcon}>
                     <Popup>
                       <strong>Lokasi Anda</strong>
