@@ -11,8 +11,10 @@ import 'leaflet-routing-machine/dist/leaflet-routing-machine.css'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
-import { Search, MapPin, Monitor, Smartphone, Printer, Star, LayoutGrid, Settings, LogOut, Navigation, Map as MapIcon, X, Store, AlertTriangle } from 'lucide-react'
+import { Search, MapPin, Monitor, Smartphone, Printer, Star, LayoutGrid, Settings, LogOut, Navigation, Map as MapIcon, X, AlertTriangle } from 'lucide-react'
+import OwnerStoreIcon from '../components/OwnerStoreIcon'
 import { getResponsiveValues } from '../utils/responsive'
+import { CATEGORY_OPTIONS, DEFAULT_CATEGORY } from '../constants/categories'
 
 // Fix Leaflet icons
 delete L.Icon.Default.prototype._getIconUrl
@@ -22,13 +24,18 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 })
 
-const currentLocationIcon = L.icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowUrl: markerShadow,
-  shadowSize: [41, 41]
+const currentLocationIcon = L.divIcon({
+  className: 'current-location-icon',
+  html: `
+    <svg viewBox="0 0 512 512" width="48" height="48" aria-hidden="true" focusable="false">
+      <path d="M256 32C150.2 32 64 118.2 64 224c0 135.2 176 256 192 256s192-120.8 192-256C448 118.2 361.8 32 256 32z" fill="#2d9cf4"/>
+      <circle cx="256" cy="152" r="52" fill="#ffffff"/>
+      <path d="M188 320c0-37.6 30.4-68 68-68h0c37.6 0 68 30.4 68 68v26H188v-26z" fill="#ffffff"/>
+    </svg>
+  `,
+  iconSize: [48, 48],
+  iconAnchor: [24, 48],
+  popupAnchor: [0, -42],
 })
 
 const umkmMarkerIcon = L.icon({
@@ -69,7 +76,7 @@ export default function UserMap() {
   const [query, setQuery] = useState('')
   const [umkmResults, setUmkmResults] = useState([])
   const [loadingUmkm, setLoadingUmkm] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState("Semua Kategori")
+  const [selectedCategory, setSelectedCategory] = useState(DEFAULT_CATEGORY)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showMapModal, setShowMapModal] = useState(false)
 
@@ -87,7 +94,7 @@ export default function UserMap() {
       const params = { status: 'APPROVED' }
       if (query.trim()) params.q = query.trim()
 
-      if (selectedCategory && selectedCategory !== 'Semua Kategori') {
+      if (selectedCategory && selectedCategory !== DEFAULT_CATEGORY) {
         params.kategori = selectedCategory
       }
 
@@ -399,7 +406,7 @@ export default function UserMap() {
         const params = { status: 'APPROVED' }
         if (query.trim()) params.q = query.trim()
 
-        if (selectedCategory && selectedCategory !== 'Semua Kategori') {
+        if (selectedCategory && selectedCategory !== DEFAULT_CATEGORY) {
           params.kategori = selectedCategory
         }
 
@@ -690,7 +697,7 @@ export default function UserMap() {
                       onMouseEnter={(e) => e.currentTarget.style.background = '#f0fdfa'}
                       onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                     >
-                      <Store size={16} />
+                      <OwnerStoreIcon size={16} />
                       Daftarkan Usaha Saya
                     </button>
                   )}
@@ -803,9 +810,10 @@ export default function UserMap() {
               value={selectedCategory}
               onChange={e => setSelectedCategory(e.target.value)}
             >
-              <option>Semua Kategori</option>
-              <option>PC&Laptop</option>
-              <option>Handphone</option>
+              <option value={DEFAULT_CATEGORY}>{DEFAULT_CATEGORY}</option>
+              {CATEGORY_OPTIONS.map((item) => (
+                <option key={item} value={item}>{item}</option>
+              ))}
             </select>
 
             {!isMobile && (

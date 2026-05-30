@@ -3,18 +3,21 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import { MapPin, Check, ExternalLink } from 'lucide-react'
 import api from '../services/api'
+import { CATEGORY_OPTIONS, normalizeCategoryLabel } from '../constants/categories'
 
 export default function UmkmForm() {
   const { user, updateUser } = useContext(AuthContext)
   const navigate = useNavigate()
   const location = useLocation()
-  const editUmkm = location.state?.umkm || null
-  const isEditMode = Boolean(editUmkm) || location.pathname === '/owner/edit-umkm'
+  const isRegisterRoute = location.pathname === '/owner/register-umkm'
+  const editUmkm = !isRegisterRoute ? location.state?.umkm || null : null
+  const isEditMode = !isRegisterRoute && (Boolean(editUmkm) || location.pathname === '/owner/edit-umkm')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [gettingLocation, setGettingLocation] = useState(false)
   const [locationSuccess, setLocationSuccess] = useState(false)
   const [showManualInput, setShowManualInput] = useState(false)
+  const [resolvedAddress, setResolvedAddress] = useState('')
   const [form, setForm] = useState({
     name: '',
     address: '',
@@ -28,47 +31,33 @@ export default function UmkmForm() {
     hari_operasional: 'Senin - Sabtu',
   })
   const requiredMark = <span style={{ color: '#dc2626' }}> *</span>
-  const categoryOptions = [
-    'Smartphone & HP',
-    'Laptop & PC',
-    'Smartwatch',
-    'Tablet',
-    'TWS & Headphone',
-    'Kamera Digital',
-    'Printer & Scanner',
-    'Konsol Game',
-    'TV & Monitor',
-    'Peralatan Rumah Tangga',
-  ]
-
   const reverseGeocode = async (lat, lng) => {
-    const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim()
-
-    if (googleApiKey) {
-      const googleUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${encodeURIComponent(`${lat},${lng}`)}&key=${encodeURIComponent(googleApiKey)}&language=id`
-      const googleResponse = await fetch(googleUrl)
-      if (googleResponse.ok) {
-        const googleData = await googleResponse.json()
-        const googleAddress = googleData?.results?.[0]?.formatted_address
-        if (googleAddress) return googleAddress
-      }
-    }
-
-    const osmUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&zoom=18&addressdetails=1`
-    const osmResponse = await fetch(osmUrl, {
-      headers: {
-        'Accept-Language': 'id',
-      },
+    const { data } = await api.get('/utils/reverse-geocode/', {
+      params: { lat, lng },
     })
-    if (osmResponse.ok) {
-      const osmData = await osmResponse.json()
-      return osmData?.display_name || ''
-    }
-
-    return ''
+    return data?.address || data?.formatted_address || data?.display_name || ''
   }
 
   useEffect(() => {
+    if (isRegisterRoute) {
+      setForm({
+        name: '',
+        address: '',
+        category: '',
+        description: '',
+        contact: '',
+        latitude: '',
+        longitude: '',
+        jam_buka: '08:00',
+        jam_tutup: '20:00',
+        hari_operasional: 'Senin - Sabtu',
+      })
+      setLocationSuccess(false)
+      setShowManualInput(false)
+      setResolvedAddress('')
+      return
+    }
+
     const branch = editUmkm?.branches?.[0] || null
     const coordinates = branch?.geom?.coordinates
 
@@ -76,7 +65,7 @@ export default function UmkmForm() {
       setForm({
         name: editUmkm.nama_umkm || '',
         address: branch?.alamat || '',
-        category: editUmkm.kategori?.nama_kategori || '',
+        category: normalizeCategoryLabel(editUmkm.kategori?.nama_kategori || ''),
         description: editUmkm.deskripsi || '',
         contact: editUmkm.telpon || '',
         latitude: Array.isArray(coordinates) && coordinates.length >= 2 ? String(coordinates[1]) : '',
@@ -105,7 +94,7 @@ export default function UmkmForm() {
         setForm({
           name: current.nama_umkm || '',
           address: currentBranch?.alamat || '',
-          category: current.kategori?.nama_kategori || '',
+          category: normalizeCategoryLabel(current.kategori?.nama_kategori || ''),
           description: current.deskripsi || '',
           contact: current.telpon || '',
           latitude: Array.isArray(currentCoordinates) && currentCoordinates.length >= 2 ? String(currentCoordinates[1]) : '',
@@ -122,7 +111,7 @@ export default function UmkmForm() {
     }
 
     loadExistingUmkm()
-  }, [editUmkm, isEditMode])
+  }, [editUmkm, isEditMode, isRegisterRoute])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -152,17 +141,23 @@ export default function UmkmForm() {
         try {
           const address = await reverseGeocode(lat, lng)
           if (address) {
+            setResolvedAddress(address)
             setForm((prev) => ({
               ...prev,
               latitude: String(lat),
               longitude: String(lng),
               address,
             }))
+          } else {
+            setResolvedAddress('')
+            setError('Koordinat berhasil ditemukan, tetapi alamat otomatis belum tersedia. Silakan isi alamat manual.')
           }
           setLocationSuccess(true)
           setShowManualInput(true)
         } catch (reverseError) {
           console.error('Gagal reverse geocoding:', reverseError)
+          setResolvedAddress('')
+          setError('Koordinat ditemukan, tetapi alamat otomatis belum berhasil diisi. Silakan edit alamat manual.')
           setLocationSuccess(true)
           setShowManualInput(true)
         } finally {
@@ -255,6 +250,8 @@ export default function UmkmForm() {
 
       console.log('=== SENDING TO BACKEND ===')
       console.log('Payload:', payload)
+      console.log('[UMKM SUBMIT] localStorage token present?:', !!localStorage.getItem('token'))
+      console.log('[UMKM SUBMIT] localStorage token (len):', localStorage.getItem('token') ? localStorage.getItem('token').length : 0)
 
       const response = isEditMode && editUmkm?.umkm_id
         ? await api.patch(`/umkm/${editUmkm.umkm_id}/`, payload)
@@ -460,7 +457,7 @@ export default function UmkmForm() {
               style={{ width: '100%', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box', appearance: 'auto', cursor: 'pointer', backgroundColor: '#fff' }}
             >
               <option value="">-- Pilih Kategori --</option>
-              {categoryOptions.map((item) => (
+              {CATEGORY_OPTIONS.map((item) => (
                 <option key={item} value={item}>{item}</option>
               ))}
             </select>
@@ -538,6 +535,13 @@ export default function UmkmForm() {
                   Lokasi saat ini: Akurat (GPS: {form.latitude}, {form.longitude})
                 </p>
 
+                {resolvedAddress && (
+                  <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '12px 16px', marginBottom: 12 }}>
+                    <div style={{ fontSize: 12, color: '#1d4ed8', fontWeight: 600, marginBottom: 4 }}>Alamat hasil lokasi otomatis</div>
+                    <div style={{ fontSize: 13, color: '#1e293b', lineHeight: 1.5 }}>{resolvedAddress}</div>
+                  </div>
+                )}
+
                 <div style={{ background: '#fff', padding: 12, borderRadius: 8, marginBottom: 12 }}>
                   <div style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>Koordinat Terdeteksi:</div>
                   <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
@@ -607,6 +611,9 @@ export default function UmkmForm() {
               value={form.address}
               onChange={handleChange}
               required
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
               placeholder="Masukkan alamat lengkap lokasi usaha"
               style={{ width: '100%', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
             />

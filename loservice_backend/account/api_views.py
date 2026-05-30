@@ -9,8 +9,10 @@ from django.contrib.auth import get_user_model
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 import hashlib
+import json
 import re
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -20,16 +22,42 @@ from .serializer import (
     UMKMProductSerializer, UMKMGallerySerializer, UMKMReviewSerializer, ProfilePictureUploadSerializer
 )
 
+
+CATEGORY_FILTER_ALIASES = {
+    'Handphone': {'Handphone', 'Smartphone & HP', 'Smarthphone & HP'},
+    'Laptop & PC': {'Laptop & PC', 'PC&Laptop', 'PC & Laptop'},
+}
+
+
+def resolve_category_filter_names(category_name):
+    value = (category_name or '').strip()
+    if not value:
+        return set()
+
+    lowered = value.lower()
+    for canonical, aliases in CATEGORY_FILTER_ALIASES.items():
+        if lowered == canonical.lower() or lowered in {alias.lower() for alias in aliases}:
+            return aliases
+
+    return {value}
+
 User = get_user_model()
 
 
 class IsOwnerOrAdminForWrite(BasePermission):
-    """Allow anyone to read; only authenticated OWNER/ADMIN can write."""
-    message = "Anda tidak memiliki izin untuk melakukan action ini. Role Anda harus OWNER atau ADMIN."
+    """Allow public read, authenticated create, and OWNER/ADMIN update/delete."""
+    message = "Anda tidak memiliki izin untuk melakukan action ini."
 
     def has_permission(self, request, view):
         # Allow GET, HEAD, OPTIONS for everyone (public read)
         if request.method in ("GET", "HEAD", "OPTIONS"):
+            return True
+
+        # Allow authenticated users to create UMKM so USER can be promoted on success
+        if request.method == "POST":
+            if not request.user or not request.user.is_authenticated:
+                self.message = "Anda harus login terlebih dahulu."
+                return False
             return True
         
         # For write operations, require authentication
@@ -433,12 +461,24 @@ class UMKMReviewViewSet(viewsets.ModelViewSet):
             )
         
         # Log who is creating the review
-        logger.info(f'[UMKMReview] Review being created by user: {user.email} (ID: {user.user_id}) with role: {user.role}')
-        
+        logger.info(f'[UMKMReview] Review being created by user: {getattr(user, "email", "<anon>")} (ID: {getattr(user, "user_id", "?")}) with role: {getattr(user, "role", None)}')
+
+        # Server-side validation: prevent owners from posting reviews on their own UMKM
+        umkm = serializer.validated_data.get('umkm')
+        try:
+            umkm_owner_id = getattr(umkm.user, 'user_id', None)
+        except Exception:
+            umkm_owner_id = None
+
+        if umkm_owner_id and umkm_owner_id == getattr(user, 'user_id', None) and not self._is_admin(user):
+            from rest_framework.exceptions import PermissionDenied
+            logger.warning(f'[UMKMReview] User {getattr(user, "email", "?")} attempted to review own UMKM {getattr(umkm, "umkm_id", "?")}')
+            raise PermissionDenied('Anda tidak dapat mengirim ulasan ke toko Anda sendiri')
+
         # Save review with authenticated user
         review = serializer.save(user=user)
-        
-        logger.info(f'[UMKMReview] Review {review.review_id} successfully created for user {user.email}')
+
+        logger.info(f'[UMKMReview] Review {getattr(review, "review_id", "?")} successfully created for user {getattr(user, "email", "?")}')
     
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def debug_auth_user(self, request):
@@ -545,7 +585,7 @@ class UMKMViewSet(viewsets.ModelViewSet):
         # Filter by kategori if provided
         kategori = (self.request.query_params.get("kategori") or "").strip()
         if kategori:
-            queryset = queryset.filter(kategori__nama_kategori__iexact=kategori)
+            queryset = queryset.filter(kategori__nama_kategori__in=resolve_category_filter_names(kategori))
 
         return queryset
 
@@ -722,6 +762,55 @@ class UMKMViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class ReverseGeocodeView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        lat = (request.query_params.get("lat") or "").strip()
+        lng = (request.query_params.get("lng") or "").strip()
+
+        try:
+            latitude = float(lat)
+            longitude = float(lng)
+        except (TypeError, ValueError):
+            return Response({"detail": "Koordinat tidak valid"}, status=status.HTTP_400_BAD_REQUEST)
+
+        address = self._reverse_geocode(latitude, longitude)
+        if not address:
+            return Response({"detail": "Alamat tidak ditemukan"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"address": address})
+
+    def _reverse_geocode(self, latitude, longitude):
+        google_api_key = os.getenv("VITE_GOOGLE_MAPS_API_KEY") or os.getenv("GOOGLE_MAPS_API_KEY")
+
+        if google_api_key:
+            try:
+                google_url = (
+                    "https://maps.googleapis.com/maps/api/geocode/json"
+                    f"?latlng={latitude},{longitude}&key={google_api_key}&language=id"
+                )
+                with urlopen(Request(google_url, headers={"User-Agent": "ServPoint/1.0"}), timeout=8) as resp:
+                    google_data = json.loads(resp.read().decode("utf-8"))
+                google_address = google_data.get("results", [{}])[0].get("formatted_address")
+                if google_address:
+                    return google_address
+            except Exception as exc:
+                logger.warning("Google reverse geocoding failed: %s", exc)
+
+        try:
+            osm_url = (
+                "https://nominatim.openstreetmap.org/reverse"
+                f"?format=jsonv2&lat={latitude}&lon={longitude}&zoom=18&addressdetails=1"
+            )
+            with urlopen(Request(osm_url, headers={"User-Agent": "ServPoint/1.0", "Accept-Language": "id"}), timeout=8) as resp:
+                osm_data = json.loads(resp.read().decode("utf-8"))
+            return osm_data.get("display_name") or ""
+        except Exception as exc:
+            logger.warning("OpenStreetMap reverse geocoding failed: %s", exc)
+            return ""
 
     def destroy(self, request, *args, **kwargs):
         # Hanya superuser yang bisa delete (via Django admin saja)
