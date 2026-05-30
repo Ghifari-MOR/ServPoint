@@ -801,10 +801,6 @@ class ReverseGeocodeView(APIView):
                     structured_address = self._format_google_components(components)
                     if structured_address:
                         return structured_address
-
-                    google_address = first_result.get("formatted_address")
-                    if google_address:
-                        return google_address
             except Exception as exc:
                 logger.warning("Google reverse geocoding failed: %s", exc)
 
@@ -833,6 +829,8 @@ class ReverseGeocodeView(APIView):
 
         if route.lower().startswith("jalan "):
             route = f"Jl. {route[6:]}"
+        elif route and not route.lower().startswith("jl."):
+            route = f"Jl. {route}"
 
         street_part = ""
         if route and street_number:
@@ -848,7 +846,7 @@ class ReverseGeocodeView(APIView):
         if kecamatan and not kecamatan.lower().startswith("kec."):
             kecamatan = f"Kec. {kecamatan}"
 
-        city = self._get_component(components, ["locality"])
+        city = self._get_component(components, ["administrative_area_level_2", "locality"])
         if city:
             lower_city = city.lower()
             if not (lower_city.startswith("kota ") or lower_city.startswith("kabupaten ")):
