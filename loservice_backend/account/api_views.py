@@ -794,9 +794,17 @@ class ReverseGeocodeView(APIView):
                 )
                 with urlopen(Request(google_url, headers={"User-Agent": "ServPoint/1.0"}), timeout=8) as resp:
                     google_data = json.loads(resp.read().decode("utf-8"))
-                google_address = google_data.get("results", [{}])[0].get("formatted_address")
-                if google_address:
-                    return google_address
+                results = google_data.get("results") or []
+                if results:
+                    first_result = results[0]
+                    components = first_result.get("address_components") or []
+                    structured_address = self._format_google_components(components)
+                    if structured_address:
+                        return structured_address
+
+                    google_address = first_result.get("formatted_address")
+                    if google_address:
+                        return google_address
             except Exception as exc:
                 logger.warning("Google reverse geocoding failed: %s", exc)
 
@@ -811,6 +819,47 @@ class ReverseGeocodeView(APIView):
         except Exception as exc:
             logger.warning("OpenStreetMap reverse geocoding failed: %s", exc)
             return ""
+
+    def _get_component(self, components, preferred_types):
+        for target_type in preferred_types:
+            for component in components:
+                if target_type in (component.get("types") or []):
+                    return (component.get("long_name") or "").strip()
+        return ""
+
+    def _format_google_components(self, components):
+        route = self._get_component(components, ["route"])
+        street_number = self._get_component(components, ["street_number"])
+
+        if route.lower().startswith("jalan "):
+            route = f"Jl. {route[6:]}"
+
+        street_part = ""
+        if route and street_number:
+            street_part = f"{route} No.{street_number}"
+        elif route:
+            street_part = route
+        elif street_number:
+            street_part = f"No.{street_number}"
+
+        kelurahan = self._get_component(components, ["sublocality_level_3", "administrative_area_level_4"])
+
+        kecamatan = self._get_component(components, ["sublocality_level_2", "administrative_area_level_3"])
+        if kecamatan and not kecamatan.lower().startswith("kec."):
+            kecamatan = f"Kec. {kecamatan}"
+
+        city = self._get_component(components, ["locality"])
+        if city:
+            lower_city = city.lower()
+            if not (lower_city.startswith("kota ") or lower_city.startswith("kabupaten ")):
+                city = f"Kota {city}"
+
+        province = self._get_component(components, ["administrative_area_level_1"])
+        postal_code = self._get_component(components, ["postal_code"])
+        province_postal = " ".join(part for part in [province, postal_code] if part)
+
+        parts = [street_part, kelurahan, kecamatan, city, province_postal]
+        return ", ".join(part for part in parts if part)
 
     def destroy(self, request, *args, **kwargs):
         # Hanya superuser yang bisa delete (via Django admin saja)
