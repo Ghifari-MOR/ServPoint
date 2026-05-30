@@ -86,6 +86,7 @@ export default function UserMap() {
 
   const [userLocation, setUserLocation] = useState(null)
   const [routingControl, setRoutingControl] = useState(null)
+  const [routeTarget, setRouteTarget] = useState(null)
   const [mapInstance, setMapInstance] = useState(null)
   const [mapCenterState, setMapCenterState] = useState(null)
 
@@ -247,6 +248,8 @@ export default function UserMap() {
         setRoutingControl(null)
       }
 
+      setRouteTarget({ lat: umkmLat, lng: umkmLng })
+
       // Create new route with error handling
       const control = L.Routing.control({
         waypoints: [
@@ -266,10 +269,14 @@ export default function UserMap() {
         },
         containerClassName: 'custom-routing-container',
         createMarker: function(i, waypoint, n) {
+          if (i === 0) {
+            return null
+          }
+
           const marker = L.marker(waypoint.latLng, {
             draggable: false,
             icon: L.icon({
-              iconUrl: i === 0 ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png' : markerIcon,
+              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
               iconSize: [25, 41],
               iconAnchor: [12, 41],
               popupAnchor: [1, -34],
@@ -277,12 +284,8 @@ export default function UserMap() {
               shadowSize: [41, 41]
             })
           })
-          
-          if (i === 0) {
-            marker.bindPopup('Lokasi Anda')
-          } else {
-            marker.bindPopup('Tujuan')
-          }
+
+          marker.bindPopup('Tujuan')
           
           return marker
         }
@@ -382,6 +385,7 @@ export default function UserMap() {
       try {
         mapInstance.removeControl(routingControl)
         setRoutingControl(null)
+        setRouteTarget(null)
         console.log('Route cleared')
       } catch (error) {
         console.error('Error clearing route:', error)
@@ -532,6 +536,11 @@ export default function UserMap() {
 
   const mapCenter = mapCenterState ? [mapCenterState.lat, mapCenterState.lng] : (markers.length ? [markers[0].lat, markers[0].lng] : [-6.353, 106.832]) // Default near STT-NF
   const resultCount = umkmResults.length
+  const routeTargetKey = routeTarget ? `${routeTarget.lat.toFixed(6)}:${routeTarget.lng.toFixed(6)}` : null
+  const isRouteActive = Boolean(routeTargetKey)
+  const visibleMarkers = isRouteActive
+    ? markers.filter((m) => `${m.lat.toFixed(6)}:${m.lng.toFixed(6)}` === routeTargetKey)
+    : markers
 
   const getCategoryIcon = (cat) => {
     const c = (cat || '').toLowerCase()
@@ -1013,7 +1022,7 @@ export default function UserMap() {
                   noWrap
                 />
 
-                {userLocation && (
+                {userLocation && !isRouteActive && (
                   <Marker position={[userLocation.lat, userLocation.lng]} icon={currentLocationIcon}>
                     <Popup>
                       <strong>Lokasi Anda</strong>
@@ -1021,7 +1030,7 @@ export default function UserMap() {
                   </Marker>
                 )}
 
-                {markers.map(m => (
+                {visibleMarkers.map(m => (
                   <Marker key={m.key} position={[m.lat, m.lng]} icon={umkmMarkerIcon}>
                     <Popup>
                       <strong>{m.name}</strong><br />
@@ -1128,7 +1137,7 @@ export default function UserMap() {
                   noWrap
                 />
 
-                {userLocation && (
+                {userLocation && !isRouteActive && (
                   <Marker position={[userLocation.lat, userLocation.lng]} icon={currentLocationIcon}>
                     <Popup>
                       <strong>Lokasi Anda</strong>
@@ -1136,7 +1145,7 @@ export default function UserMap() {
                   </Marker>
                 )}
 
-                {markers.map(m => (
+                {visibleMarkers.map(m => (
                   <Marker key={m.key} position={[m.lat, m.lng]} icon={umkmMarkerIcon}>
                     <Popup>
                       <strong>{m.name}</strong><br />
