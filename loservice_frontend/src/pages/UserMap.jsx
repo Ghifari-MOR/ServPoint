@@ -558,7 +558,7 @@ export default function UserMap() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
-      <main style={{ width: '100%', padding: isMobile ? '20px 16px' : '24px 32px', display: 'flex', flexDirection: 'column', gap: isMobile ? 16 : 24, overflow: 'hidden' }}>
+      <main style={{ width: '100%', padding: isMobile ? '12px 12px' : '24px 32px', display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 24, overflow: 'hidden' }}>
 
         {/* Header */}
         <div style={{ 
@@ -570,24 +570,24 @@ export default function UserMap() {
           position: 'relative'
         }}>
           <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: isMobile ? 10 : 12, fontWeight: 700, color: '#3b82f6', letterSpacing: 0.5, marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: isMobile ? 9 : 12, fontWeight: 700, color: '#3b82f6', letterSpacing: 0.5, marginBottom: 2 }}>
               <img
                 src="/logo-sp-v2.svg"
                 alt="ServicePoint"
-                style={{ width: isMobile ? 14 : 16, height: isMobile ? 14 : 16, objectFit: 'contain', flexShrink: 0 }}
+                style={{ width: isMobile ? 12 : 16, height: isMobile ? 12 : 16, objectFit: 'contain', flexShrink: 0 }}
               />
               <span>SERVICEPOINT</span>
             </div>
             <h1 style={{ 
-              fontSize: isMobile ? 22 : 28, 
+              fontSize: isMobile ? 18 : 28, 
               fontWeight: 800, 
               color: '#0f172a', 
-              margin: '0 0 8px' 
+              margin: '0 0 4px' 
             }}>Temukan Tempat Servis</h1>
             <p style={{ 
               color: '#64748b', 
               margin: 0,
-              fontSize: isMobile ? 13 : 14
+              fontSize: isMobile ? 12 : 14
             }}>Bengkel terverifikasi untuk Laptop, PC, dan HP di sekitar kampus.</p>
           </div>
 
@@ -770,17 +770,17 @@ export default function UserMap() {
         {/* Search Bar - Responsive */}
         <div style={{ 
           background: '#fff', 
-          padding: isMobile ? '12px 12px' : '8px 8px', 
+          padding: isMobile ? '10px 10px' : '8px 8px', 
           borderRadius: 16, 
           border: '1px solid #e2e8f0', 
           display: 'flex', 
-          gap: isMobile ? 8 : 12, 
+          gap: isMobile ? 6 : 12, 
           alignItems: 'center', 
           flexWrap: isMobile ? 'wrap' : 'nowrap',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' 
         }}>
-          <div style={{ flex: isMobile ? '1 0 100%' : '1', display: 'flex', alignItems: 'center', gap: 12, paddingLeft: 12, minWidth: 0, position: 'relative' }}>
-            <Search size={20} color="#cbd5e1" style={{ flexShrink: 0 }} />
+          <div style={{ flex: isMobile ? '1 0 100%' : '1', display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 10, minWidth: 0, position: 'relative' }}>
+            <Search size={isMobile ? 18 : 20} color="#cbd5e1" style={{ flexShrink: 0 }} />
             <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
               <input
                 placeholder={isMobile ? "Cari servis atau produk..." : "Cari nama UMKM, produk, atau layanan (mis: servis laptop, ganti layar HP)..."}
@@ -788,7 +788,7 @@ export default function UserMap() {
                   border: 'none', 
                   outline: 'none', 
                   width: '100%', 
-                  fontSize: isMobile ? 13 : 15, 
+                  fontSize: isMobile ? 12 : 15, 
                   color: '#1e293b' 
                 }}
                 value={query}
@@ -799,7 +799,7 @@ export default function UserMap() {
 
           {!isMobile && <div style={{ height: 24, width: 1, background: '#e2e8f0', flexShrink: 0 }} />}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, paddingRight: isMobile ? 8 : 8, flexWrap: isMobile ? 'wrap' : 'nowrap', justifyContent: isMobile ? 'flex-end' : 'center', flex: isMobile ? '1 0 100%' : '0 1 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8, paddingRight: isMobile ? 6 : 8, flexWrap: isMobile ? 'wrap' : 'nowrap', justifyContent: isMobile ? 'flex-end' : 'center', flex: isMobile ? '1 0 100%' : '0 1 auto' }}>
             <select
               style={{
                 border: '1px solid #e2e8f0',
@@ -808,10 +808,10 @@ export default function UserMap() {
                 fontWeight: 600,
                 color: '#475569',
                 cursor: 'pointer',
-                padding: isMobile ? '8px 10px' : '10px 12px',
+                padding: isMobile ? '7px 8px' : '10px 12px',
                 borderRadius: 10,
-                minWidth: isMobile ? 130 : 160,
-                fontSize: isMobile ? 12 : 14,
+                minWidth: isMobile ? 110 : 160,
+                fontSize: isMobile ? 11 : 14,
                 WebkitAppearance: 'menulist',
                 appearance: 'auto',
                 flexShrink: 0
@@ -834,9 +834,9 @@ export default function UserMap() {
             {isMobile ? (
               <button 
                 onClick={() => setShowMapModal(true)}
-                style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+                style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '7px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
               >
-                <MapIcon size={16} /> Map
+                <MapIcon size={14} /> Map
               </button>
             ) : (
               <button style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: 10, fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -848,7 +848,7 @@ export default function UserMap() {
 
         {/* Filters & Results Count */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: isMobile ? 14 : 16, color: '#1e293b' }}>
+          <h3 style={{ margin: 0, fontSize: isMobile ? 13 : 16, color: '#1e293b' }}>
             <strong>{resultCount} Hasil</strong> <span style={{ fontWeight: 400, color: '#64748b' }}>ditemukan</span>
           </h3>
         </div>
@@ -856,8 +856,8 @@ export default function UserMap() {
         {/* Content Grid - Responsive */}
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: isMobile ? '1fr' : 'minmax(320px, 350px) 1fr', 
-          gap: 24, 
+          gridTemplateColumns: isMobile ? '1fr' : 'minmax(300px, 330px) 1fr', 
+          gap: isMobile ? 16 : 24, 
           height: isMobile ? 'auto' : 'calc(100vh - 280px)',
           maxHeight: isMobile ? 'none' : 'calc(100vh - 280px)'
         }}>
@@ -868,7 +868,7 @@ export default function UserMap() {
             paddingRight: isMobile ? 0 : 8, 
             display: 'flex', 
             flexDirection: 'column', 
-            gap: 16,
+            gap: isMobile ? 12 : 16,
             maxHeight: isMobile ? 'none' : 'calc(100vh - 280px)'
           }}>
             {loadingUmkm ? (
@@ -880,22 +880,32 @@ export default function UserMap() {
                 calculateDistance(userLocation.lat, userLocation.lng, coords[1], coords[0]) : null
               
               return (
-              <div key={umkm.umkm_id}
-                style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: isMobile ? 12 : 16, transition: 'all 0.2s', position: 'relative', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)' }}
+              <div 
+                key={umkm.umkm_id}
+                onClick={() => openUmkmDetail(umkm.umkm_id)}
+                style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', padding: isMobile ? 10 : 16, transition: 'all 0.2s', position: 'relative', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)', cursor: 'pointer' }}
                 className="hover:shadow-md hover:border-indigo-300"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.1)'
+                  e.currentTarget.style.borderColor = '#3b82f6'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 1px 2px 0 rgba(0,0,0,0.05)'
+                  e.currentTarget.style.borderColor = '#e2e8f0'
+                }}
               >
                 {/* Badge Rekomendasi */}
-                <div style={{ position: 'absolute', top: 0, right: 0, background: '#3b82f6', color: '#fff', fontSize: 9, fontWeight: 700, padding: '4px 10px', borderRadius: '0 15px 0 10px', textTransform: 'uppercase' }}>
+                <div style={{ position: 'absolute', top: 0, right: 0, background: '#3b82f6', color: '#fff', fontSize: isMobile ? 7 : 9, fontWeight: 700, padding: isMobile ? '3px 8px' : '4px 10px', borderRadius: '0 12px 0 10px', textTransform: 'uppercase' }}>
                   REKOMENDASI
                 </div>
 
-                <div style={{ display: 'flex', gap: isMobile ? 12 : 16 }}>
+                <div style={{ display: 'flex', gap: isMobile ? 10 : 16 }}>
                   {/* UMKM Image or Category Icon */}
                   <div style={{ 
-                    width: isMobile ? 56 : 64, 
-                    height: isMobile ? 56 : 64, 
+                    width: isMobile ? 48 : 64, 
+                    height: isMobile ? 48 : 64, 
                     background: umkm.primary_image ? 'transparent' : '#f1f5f9', 
-                    borderRadius: 12, 
+                    borderRadius: 10, 
                     display: 'grid', 
                     placeItems: 'center',
                     overflow: 'hidden',
@@ -916,13 +926,13 @@ export default function UserMap() {
                     )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <h4 style={{ margin: '0 0 4px', fontSize: isMobile ? 14 : 16, fontWeight: 700, color: '#1e293b' }}>{umkm.nama_umkm}</h4>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: isMobile ? 12 : 13, color: '#64748b', marginBottom: 8 }}>
-                      <MapPin size={14} /> 
+                    <h4 style={{ margin: '0 0 3px', fontSize: isMobile ? 13 : 16, fontWeight: 700, color: '#1e293b' }}>{umkm.nama_umkm}</h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: isMobile ? 11 : 13, color: '#64748b', marginBottom: 6 }}>
+                      <MapPin size={isMobile ? 12 : 14} /> 
                       {distance ? formatDistance(distance) : '-- m'} • <span style={{ color: getBusinessStatus(umkm) ? '#16a34a' : '#dc2626', fontWeight: 600 }}>{getBusinessStatus(umkm) ? 'Buka' : 'Tutup'}</span>
                     </div>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <span style={{ background: '#f1f5f9', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 500, color: '#475569' }}>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <span style={{ background: '#f1f5f9', padding: isMobile ? '2px 6px' : '2px 8px', borderRadius: 6, fontSize: isMobile ? 10 : 11, fontWeight: 500, color: '#475569' }}>
                         {umkm?.kategori?.nama_kategori || 'Umum'}
                       </span>
                     </div>
@@ -930,20 +940,20 @@ export default function UserMap() {
                 </div>
 
                 {/* Operating Hours & Address */}
-                <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {/* Jam Operasional */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <div style={{ 
-                      width: 24, 
-                      height: 24, 
+                      width: isMobile ? 20 : 24, 
+                      height: isMobile ? 20 : 24, 
                       background: '#f0fdf4', 
                       borderRadius: '50%', 
                       display: 'grid', 
                       placeItems: 'center',
                     }}>
-                      <span style={{ fontSize: 12 }}>🕐</span>
+                      <span style={{ fontSize: isMobile ? 10 : 12 }}>🕐</span>
                     </div>
-                    <span style={{ fontSize: isMobile ? 11 : 12, color: '#64748b', fontWeight: 500 }}>
+                    <span style={{ fontSize: isMobile ? 10 : 12, color: '#64748b', fontWeight: 500 }}>
                       {branch?.jam_buka && branch?.jam_tutup
                         ? `${branch.jam_buka} - ${branch.jam_tutup} WIB`
                         : '08:00 - 20:00 WIB'
@@ -953,59 +963,33 @@ export default function UserMap() {
                   
                   {/* Nama Jalan */}
                   {branch?.alamat && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <div style={{ 
-                        width: 24, 
-                        height: 24, 
+                        width: isMobile ? 20 : 24, 
+                        height: isMobile ? 20 : 24, 
                         background: '#eff6ff', 
                         borderRadius: '50%', 
                         display: 'grid', 
                         placeItems: 'center',
                       }}>
-                        <MapPin size={12} color="#3b82f6" />
+                        <MapPin size={isMobile ? 10 : 12} color="#3b82f6" />
                       </div>
-                      <span style={{ fontSize: isMobile ? 11 : 12, color: '#64748b', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: isMobile ? 10 : 12, color: '#64748b', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {branch.alamat}
                       </span>
                     </div>
                   )}
                 </div>
 
-                {/* Rating & Detail Button */}
-                <div style={{ marginTop: 16, borderTop: '1px solid #f1f5f9', paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                    <Star size={14} fill="#f59e0b" stroke="none" />
-                    <span style={{ fontSize: isMobile ? 12 : 13, fontWeight: 700, color: '#1e293b' }}>
-                      {getAverageRating(umkm)}
-                    </span>
-                    <span style={{ fontSize: isMobile ? 11 : 13, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      ({getReviewCount(umkm)} ulasan)
-                    </span>
-                  </div>
-                  
-                  <button
-                    onClick={() => openUmkmDetail(umkm.umkm_id)}
-                    style={{
-                      background: '#3b82f6',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: 8,
-                      padding: isMobile ? '6px 12px' : '8px 16px',
-                      fontSize: isMobile ? 12 : 13,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      transition: 'all 0.2s',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#4338ca'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = '#3b82f6'}
-                  >
-                    Detail
-                  </button>
+                {/* Rating */}
+                <div style={{ marginTop: 12, borderTop: '1px solid #f1f5f9', paddingTop: 10, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Star size={isMobile ? 12 : 14} fill="#f59e0b" stroke="none" />
+                  <span style={{ fontSize: isMobile ? 11 : 13, fontWeight: 700, color: '#1e293b' }}>
+                    {getAverageRating(umkm)}
+                  </span>
+                  <span style={{ fontSize: isMobile ? 10 : 13, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    ({getReviewCount(umkm)} ulasan)
+                  </span>
                 </div>
               </div>
             )})}
